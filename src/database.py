@@ -23,8 +23,15 @@ class FamilyDB:
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS shopping_list (
                     item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    item TEXT NOT NULL,
-                    quantity INTEGER
+                    item TEXT NOT NULL
+                )
+            ''')
+            #Table pour les anniversaires
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS birthdays (
+                    birthday_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    date TEXT NOT NULL
                 )
             ''')
             conn.commit()
@@ -33,12 +40,12 @@ class FamilyDB:
 
 # Gestion de la liste de course
 #----------------------------------------------------------------------------------------
-    def add_shopping_item(self,item,quantity):
+    def add_shopping_item(self,item):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO shopping_list (item, quantity) VALUES (?,?)",
-                (item,quantity)
+                "INSERT INTO shopping_list (item) VALUES (?)",
+                (item,)
             )
             conn.commit()
 
@@ -80,4 +87,18 @@ class FamilyDB:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM tasks")
+            return cursor.fetchall()
+
+
+    #Gestion des anniversaires
+    #---------------------------------------------------------------------------------------- 
+    def add_birthday(self, name, date_str):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("INSERT INTO birthdays (name, date) VALUES (?,?)", [name,date_str])
+            conn.commit()
+
+    def get_birthdays(self):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM birthdays ORDER BY date ASC")
             return cursor.fetchall()
