@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime
-from main import get_db
+from src.database import get_db
 
 db = get_db()
 st.title("🎂 Anniversaires")

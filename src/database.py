@@ -1,4 +1,5 @@
 import sqlite3
+import streamlit as st
 
 class FamilyDB:
 
@@ -79,7 +80,7 @@ class FamilyDB:
             cursor = conn.cursor()
             cursor.execute(
                 "DELETE FROM tasks WHERE task_id = ?",
-                (task_id,)
+                [task_id]
             )
             conn.commit()
 
@@ -102,3 +103,8 @@ class FamilyDB:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM birthdays ORDER BY date ASC")
             return cursor.fetchall()
+        
+
+@st.cache_resource
+def get_db():
+    return FamilyDB()

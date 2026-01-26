@@ -1,5 +1,5 @@
 import streamlit as st
-from main import get_db
+from src.database import get_db
 db = get_db()
 
 st.title("Liste de courses")
