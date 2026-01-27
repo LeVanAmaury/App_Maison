@@ -35,6 +35,14 @@ class FamilyDB:
                     date TEXT NOT NULL
                 )
             ''')
+            # Table pour les notes
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS notes (
+                    note_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             conn.commit()
 
 
@@ -90,6 +98,19 @@ class FamilyDB:
             cursor.execute("SELECT * FROM tasks")
             return cursor.fetchall()
 
+    def toggle_task_status(self, task_id):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE tasks SET done = 1 WHERE task_id = ?",
+                [task_id]
+            )
+            conn.commit()
+
+
+
+
+
 
     #Gestion des anniversaires
     #---------------------------------------------------------------------------------------- 
@@ -104,6 +125,26 @@ class FamilyDB:
             cursor.execute("SELECT * FROM birthdays ORDER BY date ASC")
             return cursor.fetchall()
         
+
+    #Gestion des notes
+    #---------------------------------------------------------------------------------------- 
+    def add_note(self, content):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("INSERT INTO notes (content) VALUES (?)", [content])
+            conn.commit()
+
+    def get_notes(self):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM notes ORDER BY created_at DESC")
+            return cursor.fetchall()
+        
+    def delete_note(self, note_id):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("DELETE FROM notes where note_id = ?", [note_id])
+            conn.commit()
+            
+
 
 @st.cache_resource
 def get_db():

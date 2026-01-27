@@ -26,6 +26,29 @@ with col2:
 
 st.divider()
 
+st.write("### Le mur de la famille")
+with st.expander("Laisser un petit mot sur le mur"):
+    with st.form("note_form", clear_on_submit=True):
+        note_text = st.text_area("Ton message :", placeholder="Met ce que tu veux")
+        if st.form_submit_button("Epingler au mur") and note_text:
+            db.add_note(note_text)
+            st.success("Note ajoutée !")
+            st.rerun()
+
+notes = db.get_notes()
+if notes:
+    cols = st.columns(3)
+    for i, (n_id, n_content, n_date) in enumerate(notes):
+        with cols[i % 3]:
+            st.info(f"{n_content}\n\n*Posté le {n_date[:10]}*")
+            if st.button("Supprimer", key=f"note_{n_id}"):
+                db.delete_note(n_id)
+                st.rerun()
+else:
+    st.info("Aucune notes pour le moment. Ajoute en une !")
+
+st.divider()
+
 c1, c2 = st.columns(2)
 with c1:
     st.write("### Dernières choses ajoutée au courses")

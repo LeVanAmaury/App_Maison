@@ -1,5 +1,6 @@
 import streamlit as st
 from src.database import get_db
+from src.notification import send_family_notification
 db = get_db()
 
 st.title("Liste des tâches")
@@ -12,10 +13,10 @@ with st.form("add_task_form"):
 
     if submit and task_text:
         db.add_task(task_text, member)
-        st.success("Tâche ajoutée !")
-
-
-
+        notification_msg = f"Nouvelle mission pour {member} : {task_text}"
+        send_family_notification(notification_msg)
+        st.success("Tâche ajoutée et norification envoyée !")
+        st.rerun()
 
 
 st.subheader("Liste des tâches en cours")
@@ -24,17 +25,20 @@ tasks = db.get_tasks()
 if not tasks:
     st.info("Aucune tâche pour le moment.")
 else:
-    for task in tasks:
-        task_id = task[0]
-        task_title = task[1]
-        task_member = task[2]
-
-        col_text_task, col_btn_task = st.columns([0.5,0.5])
-
-        with col_text_task:
-            st.write(f"**{task_member}** : {task_title}")
-
-        with col_btn_task:
-            if st.button("Supprimer", key=f"delete_{task_id}"):
-                db.remove_task(task_id)
+    tab1, tab2 = st.tabs(["A faire", "Terminées"])
+    with tab1:
+        pending = [t for t in tasks if t[3] == 0]
+        for t_id, t_title, t_member, t_status in pending:
+            c1, c2 = st.columns([0.8,0.2])
+            c1.write(f"**{t_member}** : {t_title}")
+            if c2.button("Fait", key=f"check_{t_id}"):
+                db.toggle_task_status(t_id)
+                st.rerun()
+    with tab2:
+        completed = [t for t in tasks if t[3] == 1]
+        for t_id, t_title, t_member, t_status in completed:
+            c1, c2 = st.columns([0.8, 0.2])
+            c1.write(f"~~{t_member} : {t_title}~~")
+            if c2.button("Supprimer", key=f"suppr_{t_id}"):
+                db.remove_task(t_id)
                 st.rerun()

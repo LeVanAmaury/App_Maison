@@ -13,6 +13,7 @@ dashboard_page = st.Page("views/dashboard.py", title="Tableau de bord", icon="�
 tasks_page = st.Page("views/tasks.py", title="Tâches", icon="📝")
 shopping_page = st.Page("views/shopping.py", title="Liste de courses", icon="🛒")
 birthdays_page = st.Page("views/birthdays.py", title="Annviversaires", icon="🎂")
+tv_page = st.Page("views/tv.py", title="Programme TV", icon="📺")
 
-pg = st.navigation([dashboard_page, tasks_page, shopping_page, birthdays_page])
+pg = st.navigation([dashboard_page, tasks_page, shopping_page, birthdays_page, tv_page])
 pg.run()
