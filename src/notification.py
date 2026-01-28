@@ -1,7 +1,7 @@
 import requests
 
 def send_family_notification(message, title="Family Hub"):
-    topic = "test_marwanetesvraimentgayaufinal"
+    topic = "famille_caudiu_levan"
     url = f"https://ntfy.sh/{topic}"
 
     try:
