@@ -31,7 +31,7 @@ with st.expander("Laisser un petit mot sur le mur"):
     with st.form("note_form", clear_on_submit=True):
         note_text = st.text_area("Ton message :", placeholder="Met ce que tu veux")
         if st.form_submit_button("Epingler au mur") and note_text:
-            db.add_note(note_text)
+            db.add_note(note_text,st.session_state["user"])
             st.success("Note ajoutée !")
             st.rerun()
 

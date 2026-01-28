@@ -12,7 +12,7 @@ with st.form("add_task_form", clear_on_submit=True):
     submit = st.form_submit_button("Ajouter la tache")
 
     if submit and task_text:
-        db.add_task(task_text, member)
+        db.add_task(task_text, member, st.session_state["user"])
         notification_msg = f"Nouvelle mission pour {member} : {task_text}"
         send_family_notification(notification_msg)
         st.success("Tâche ajoutée et norification envoyée !")
