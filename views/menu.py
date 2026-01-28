@@ -15,9 +15,9 @@ with st.expander("Ajouter un plat au menu"):
         with col_f2:
             type_choice = st.selectbox("Repas", ["Midi", "Soir"])
         with col_f3:
-            dish_name = st.text_input("Plat (ex: Lasagnes)")
+            dish_name = st.text_input("Repas")
         
-        submit = st.form_submit_button("Ajouter au planning")
+        submit = st.form_submit_button("Ajouter au menu")
         
         if submit and dish_name:
             db.add_menu_item(day_choice, type_choice, dish_name)
@@ -41,8 +41,8 @@ for i, jour in enumerate(jours):
                 for it in items:
                     c1, c2 = st.columns([0.8, 0.2])
                     c1.caption(it['dish'])
-                    if c2.button("🗑️", key=f"del_{it['id']}"):
-                        db.clear_menu_item(it['id'])
+                    if c2.button("🗑️", key=f"del_{it['item_id']}"):
+                        db.clear_menu_item(it['item_id'])
                         st.rerun()
             else:
                 st.write("*Rien de prévu*")
