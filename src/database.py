@@ -70,7 +70,7 @@ class FamilyDB:
     # Gestion de la liste de course
     #----------------------------------------------------------------------------------------
     def add_upgrade(self,upgrade_name):
-        self.supabase.table("shopping_list").insert({"upgrade_name": upgrade_name}).execute()
+        self.supabase.table("upgrades").insert({"upgrade_name": upgrade_name}).execute()
 
     def remove_upgrade(self,upgrade_id):
         self.supabase.table("upgrades").delete().eq("upgrade_id", upgrade_id).execute()
