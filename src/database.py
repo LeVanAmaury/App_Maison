@@ -52,7 +52,7 @@ class FamilyDB:
         self.supabase.table("birthdays").insert({"name":name, "date":date_str}).execute()
 
     def get_birthdays(self):
-        res = self.supabase.table("birthdays").select("*").order("date", asc=True).execute()
+        res = self.supabase.table("birthdays").select("*").order("date").execute()
         return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
         
     #Gestion des notes
