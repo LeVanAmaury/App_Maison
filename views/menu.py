@@ -1,13 +1,12 @@
 import streamlit as st
 from src.database import get_db
 
-st.set_page_config(layout="wide") # Pour avoir plus de place pour les 7 colonnes
+st.set_page_config(layout="wide")
 st.title("🍴 Menu de la Semaine")
 
 db = get_db()
 jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
-# --- FORMULAIRE D'AJOUT (Dans un expander pour gagner de la place) ---
 with st.expander("Ajouter un plat au menu"):
     with st.form("add_meal", clear_on_submit=True):
         col_f1, col_f2, col_f3 = st.columns(3)
@@ -25,7 +24,6 @@ with st.expander("Ajouter un plat au menu"):
             st.success(f"Ajouté pour {day_choice} !")
             st.rerun()
 
-# --- AFFICHAGE DE LA GRILLE (7 colonnes) ---
 menu_data = db.get_menu()
 cols = st.columns(7)
 

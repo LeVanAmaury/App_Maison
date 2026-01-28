@@ -85,18 +85,18 @@ class FamilyDB:
     # Gestion des menus de la semaine
     #----------------------------------------------------------------------------------------
     def add_menu_item(self, day, meal_type, dish):
-        self.client.table("weekly_menu").insert({
+        self.supabase.table("weekly_menu").insert({
             "day": day,
             "meal_type": meal_type,
             "dish": dish
         }).execute()
 
     def get_menu(self):
-        res = self.client.table("weekly_menu").select("*").execute()
+        res = self.supabase.table("weekly_menu").select("*").execute()
         return res.data
     
     def clear_menu_item(self, item_id):
-        self.client.table("weekly_menu").delete().eq("item_id", item_id).execute()
+        self.supabase.table("weekly_menu").delete().eq("item_id", item_id).execute()
 
     
 
