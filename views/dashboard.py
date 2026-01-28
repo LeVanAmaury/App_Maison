@@ -38,9 +38,9 @@ with st.expander("Laisser un petit mot sur le mur"):
 notes = db.get_notes()
 if notes:
     cols = st.columns(3)
-    for i, (n_id, n_content, n_date) in enumerate(notes):
+    for i, (n_id, n_content, n_date, n_author) in enumerate(notes):
         with cols[i % 3]:
-            st.info(f"{n_content}\n\n*Posté le {n_date[:10]}*")
+            st.info(f"{n_content}\n\n*Posté par {n_author} le {n_date[:10]}*")
             if st.button("Supprimer", key=f"note_{n_id}"):
                 db.delete_note(n_id)
                 st.rerun()
