@@ -82,6 +82,23 @@ class FamilyDB:
         res = self.supabase.table("upgrades").select("*").execute()
         return[(i['upgrade_id'], i['upgrade_name']) for i in res.data]
     
+    # Gestion des menus de la semaine
+    #----------------------------------------------------------------------------------------
+    def add_menu_item(self, day, meal_type, dish):
+        self.client.table("weekly_menu").insert({
+            "day": day,
+            "meal_type": meal_type,
+            "dish": dish
+        }).execute()
+
+    def get_menu(self):
+        res = self.client.table("weekly_menu").select("*").execute()
+        return res.data
+    
+    def clear_menu_item(self, item_id):
+        self.client.table("weekly_menu").delete().eq("item_id", item_id).execute()
+
+    
 
 @st.cache_resource
 def get_db():
