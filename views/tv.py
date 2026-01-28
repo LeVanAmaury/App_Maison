@@ -11,71 +11,71 @@ CHANNEL_MAP = {
     "France4.fr": "France 4", "BFMTV.fr": "BFM TV", "CNews.fr": "CNEWS",
     "CStar.fr": "CStar", "Gulli.fr": "Gulli", "TF1SeriesFilms.fr": "TF1 Séries Films",
     "LEQUIPE.fr": "L'Équipe", "6ter.fr": "6ter", "RMCStory.fr": "RMC Story",
-    "RMCDecouverte.fr": "RMC Découverte", "Cherie25.fr": "Chérie 25",
-    "viaATV.fr": "ATV Martinique", "viaMaTele.fr": "Ma Télé"
+    "RMCDecouverte.fr": "RMC Découverte", "Cherie25.fr": "Chérie 25"
 }
 
-st.title("📺 Programme à la télé")
+st.title("📺 Programme TV")
 
 @st.cache_data(ttl=300)
-def get_sorted_tv():
+def get_tv_data():
     url = "https://xmltvfr.fr/xmltv/xmltv_fr.xml"
     try:
         response = requests.get(url)
         root = ET.fromstring(response.content)
-        
         programs = []
         now = datetime.now()
         
         for prog in root.findall('programme'):
-            channel_id = prog.get('channel')
-            
-            if channel_id in CHANNEL_MAP:
-                start_dt = datetime.strptime(prog.get('start')[:14], "%Y%m%d%H%M%S")
-                stop_dt = datetime.strptime(prog.get('stop')[:14], "%Y%m%d%H%M%S")
+            ch_id = prog.get('channel')
+            if ch_id in CHANNEL_MAP:
+                s_str = prog.get('start')[:14]
+                e_str = prog.get('stop')[:14]
+                start_dt = datetime.strptime(s_str, "%Y%m%d%H%M%S")
+                stop_dt = datetime.strptime(e_str, "%Y%m%d%H%M%S")
                 
                 if stop_dt > now:
-                    title = prog.find('title').text
                     icon_tag = prog.find('icon')
-                    
                     programs.append({
-                        "channel": CHANNEL_MAP[channel_id],
-                        "start_time": start_dt,
-                        "display_hour": start_dt.strftime("%Hh%M"),
-                        "title": title,
+                        "channel": CHANNEL_MAP[ch_id],
+                        "start_dt": start_dt,
+                        "stop_dt": stop_dt,
+                        "title": prog.find('title').text,
                         "desc": prog.find('desc').text if prog.find('desc') is not None else "",
-                        "image": icon_tag.get('src') if icon_tag is not None else None,
-                        "category": prog.find('category').text if prog.find('category') is not None else "Autre"
+                        "category": prog.find('category').text if prog.find('category') is not None else "Autre",
+                        "image": icon_tag.get('src') if icon_tag is not None else None
                     })
-        
-        programs.sort(key=lambda x: x['start_time'])
+        programs.sort(key=lambda x: x['start_dt'])
         return programs
     except:
         return []
 
-# --- AFFICHAGE ---
-tv_data = get_sorted_tv()
+tv_list = get_tv_data()
+now = datetime.now()
 
-if not tv_data:
-    st.info("Recherche des programmes en cours...")
+if not tv_list:
+    st.info("Aucun programme trouvé.")
 else:
-    for p in tv_data[:20]:
+    for p in tv_list[:20]:
         with st.container(border=True):
-            col_hour, col_img, col_text = st.columns([0.15, 0.25, 0.6])
+            col_h, col_img, col_txt = st.columns([0.15, 0.25, 0.6])
             
-            with col_hour:
-                st.subheader(f"{p['display_hour']}")
+            with col_h:
+                st.subheader(p['start_dt'].strftime("%Hh%M"))
             
             with col_img:
                 if p['image']:
                     st.image(p['image'], use_container_width=True)
-                else:
-                    st.write("📺")
             
-            with col_text:
+            with col_txt:
                 st.markdown(f"**{p['channel']}** : {p['title']}")
-                st.caption(f"{p['category']}")
+                st.caption(f"🎭 {p['category']}")
+                
+                if p['start_dt'] <= now <= p['stop_dt']:
+                    total = (p['stop_dt'] - p['start_dt']).total_seconds()
+                    past = (now - p['start_dt']).total_seconds()
+                    progression = min(past / total, 1.0)
+                    st.progress(progression, text=f"Direct : {int(progression*100)}%")
                 
                 if p['desc']:
-                    with st.expander("Lire le résumé"):
+                    with st.expander("Détails"):
                         st.write(p['desc'])
