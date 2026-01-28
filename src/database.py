@@ -1,116 +1,50 @@
 import sqlite3
 import streamlit as st
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class FamilyDB:
 
 # Initialisation de la base
 #----------------------------------------------------------------------------------------
     def __init__(self, db_path="app_maison.db"):
-        self.db_path = db_path
-        self._init_db()
-
-    def _init_db(self):
-        with sqlite3.connect(self.db_path) as conn : 
-            cursor = conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS tasks (
-                    task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    assignee TEXT NOT NULL,
-                    done BOOLEAN DEFAULT 0
-                )
-            ''')
-            # Table pour la liste de courses
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS shopping_list (
-                    item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    item TEXT NOT NULL
-                )
-            ''')
-            #Table pour les anniversaires
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS birthdays (
-                    birthday_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    date TEXT NOT NULL
-                )
-            ''')
-            # Table pour les notes
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS notes (
-                    note_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    content TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            conn.commit()
-
-
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        if url and key:
+            self.supabase: Client = create_client(url, key)
+        else:
+            st.error("Config supabase manquante dans le .env !")
 
 # Gestion de la liste de course
 #----------------------------------------------------------------------------------------
     def add_shopping_item(self,item):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO shopping_list (item) VALUES (?)",
-                (item,)
-            )
-            conn.commit()
+        self.supabase.table("shopping_list").insert({"item": item}).execute()
 
     def remove_shopping_item(self,item_id):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM shopping_list WHERE item_id = ?", (item_id,))
-            conn.commit()
+        self.supabase.table("shopping_list").delete().eq("item_id", item_id).execute()
 
     def get_shopping_list(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM shopping_list")
-            return cursor.fetchall()
-
-
+        res = self.supabase.table("shopping_list").select("*").execute()
+        return[(i['item_id'], i['item']) for i in res.data]
 
     # Gestion des tâches
     #---------------------------------------------------------------------------------------- 
     def add_task(self, title, assignee):
-        with sqlite3.connect(self.db_path) as conn: 
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO tasks (title, assignee) VALUES (?,?)",
-                (title, assignee)
-            )
-            conn.commit()
+        self.supabase.table("tasks").insert({"title": title, "assignee": assignee}).execute()
 
     def remove_task(self, task_id):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "DELETE FROM tasks WHERE task_id = ?",
-                [task_id]
-            )
-            conn.commit()
+        self.supabase.table("tasks").delete().eq("task_id", task_id).execute()
 
     def get_tasks(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tasks")
-            return cursor.fetchall()
+        res = self.supabase.table("tasks").select("*").execute()
+        return[(t['task_id'], t['title'], t['assignee'], t['done']) for t in res.data]
 
-    def toggle_task_status(self, task_id):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE tasks SET done = 1 WHERE task_id = ?",
-                [task_id]
-            )
-            conn.commit()
-
-
-
-
-
+    def toggle_task_status(self, task_id, current_status):
+        new_status = not current_status
+        self.supabase.table("tasks").update({"done": new_status}).eq("task_id", task_id).execute()
 
     #Gestion des anniversaires
     #---------------------------------------------------------------------------------------- 
@@ -125,26 +59,18 @@ class FamilyDB:
             cursor.execute("SELECT * FROM birthdays ORDER BY date ASC")
             return cursor.fetchall()
         
-
     #Gestion des notes
     #---------------------------------------------------------------------------------------- 
     def add_note(self, content):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("INSERT INTO notes (content) VALUES (?)", [content])
-            conn.commit()
+        self.supabase.table("notes").insert({"content": content}).execute()
 
     def get_notes(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM notes ORDER BY created_at DESC")
-            return cursor.fetchall()
+        res = self.supabase.table("notes").select("*").order("created_at", desc=True).execute()
+        return [(n['note_id'], n['content'], n['created_at']) for n in res.data]
         
     def delete_note(self, note_id):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("DELETE FROM notes where note_id = ?", [note_id])
-            conn.commit()
-            
-
+        self.supabase.table("notes").delete().eq("note_id", note_id).execute()
+    
 
 @st.cache_resource
 def get_db():

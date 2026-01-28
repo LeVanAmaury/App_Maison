@@ -25,20 +25,13 @@ tasks = db.get_tasks()
 if not tasks:
     st.info("Aucune tâche pour le moment.")
 else:
-    tab1, tab2 = st.tabs(["A faire", "Terminées"])
-    with tab1:
-        pending = [t for t in tasks if t[3] == 0]
-        for t_id, t_title, t_member, t_status in pending:
-            c1, c2 = st.columns([0.8,0.2])
-            c1.write(f"**{t_member}** : {t_title}")
-            if c2.button("Fait", key=f"check_{t_id}"):
-                db.toggle_task_status(t_id)
-                st.rerun()
-    with tab2:
-        completed = [t for t in tasks if t[3] == 1]
-        for t_id, t_title, t_member, t_status in completed:
-            c1, c2 = st.columns([0.8, 0.2])
-            c1.write(f"~~{t_member} : {t_title}~~")
-            if c2.button("Supprimer", key=f"suppr_{t_id}"):
-                db.remove_task(t_id)
-                st.rerun()
+    for t_id, t_title, t_member, t_done in tasks:
+        col1, col2 = st.columns([0.8, 0.2])
+        
+        label = f"~~{t_title}~~" if t_done else t_title
+        col1.write(f"**{t_member}** : {label}")
+        
+        icon = "✅" if t_done else "⏳"
+        if col2.button(icon, key=f"toggle_{t_id}"):
+            db.toggle_task_status(t_id, t_done)
+            st.rerun()
