@@ -39,7 +39,7 @@ for i, jour in enumerate(jours):
             
             if items:
                 for it in items:
-                    c1, c2 = st.columns([0.8, 0.2])
+                    c1, c2 = st.columns([0.8, 0.4])
                     c1.caption(it['dish'])
                     if c2.button("🗑️", key=f"del_{it['item_id']}"):
                         db.clear_menu_item(it['item_id'])
