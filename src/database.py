@@ -66,6 +66,18 @@ class FamilyDB:
         
     def delete_note(self, note_id):
         self.supabase.table("notes").delete().eq("note_id", note_id).execute()
+
+    # Gestion de la liste de course
+    #----------------------------------------------------------------------------------------
+    def add_upgrade(self,upgrade_name):
+        self.supabase.table("shopping_list").insert({"upgrade_name": upgrade_name}).execute()
+
+    def remove_upgrade(self,upgrade_id):
+        self.supabase.table("upgrades").delete().eq("upgrade_id", upgrade_id).execute()
+
+    def get_upgrades(self):
+        res = self.supabase.table("upgrades").select("*").execute()
+        return[(i['upgrade_id'], i['upgrade_name']) for i in res.data]
     
 
 @st.cache_resource
