@@ -5,13 +5,12 @@ db = get_db()
 st.title("Améliorations")
 
 # --- SECTION AJOUT DE COURSES ---
-with st.container(border=True):
-    with st.form("upgrades_form", clear_on_submit=True):
-        new_upgrade = st.text_input("Ajouter une amélioration à faire")
-        if st.form_submit_button("Ajouter"):
-            if new_upgrade:
-                db.add_upgrade(new_upgrade)
-                st.rerun()
+with st.form("upgrades_form", clear_on_submit=True):
+    new_upgrade = st.text_input("Ajouter une amélioration à faire")
+    if st.form_submit_button("Ajouter"):
+        if new_upgrade:
+            db.add_upgrade(new_upgrade)
+            st.rerun()
 
 st.divider()
 
