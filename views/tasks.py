@@ -14,7 +14,7 @@ with st.form("add_task_form", clear_on_submit=True):
     if submit and task_text:
         db.add_task(task_text, member, st.session_state["user"])
         notification_msg = f"Nouvelle mission pour {member} : {task_text}"
-        send_family_notification(notification_msg)
+        #send_family_notification(notification_msg)
         st.success("Tâche ajoutée et norification envoyée !")
         st.rerun()
 
@@ -25,11 +25,11 @@ tasks = db.get_tasks()
 if not tasks:
     st.info("Aucune tâche pour le moment.")
 else:
-    for t_id, t_title, t_member, t_done in tasks:
+    for t_id, t_title, t_member, t_done, t_created_by in tasks:
         col1, col2, col3 = st.columns([0.7, 0.1, 0.2])
         
         label = f"~~{t_title}~~" if t_done else t_title
-        col1.write(f"**{t_member}** : {label}")
+        col1.write(f"Tâche de **{t_created_by}** pour **{t_member}** : {label}")
         
         icon = "✅" if t_done else "⏳"
         if col2.button(icon, key=f"toggle_{t_id}"):
