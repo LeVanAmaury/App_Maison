@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 # 1. Liste ordonnée des chaînes (pour le tri "réel")
 CHANNELS_ORDER = [
@@ -31,20 +31,19 @@ def get_grouped_tv_data():
     try:
         response = requests.get(url)
         root = ET.fromstring(response.content)
-        
-        # On organise les données par chaîne : { 'TF1.fr': [prog1, prog2...], ... }
         organized_data = {ch_id: [] for ch_id in CHANNELS_ORDER}
-        now = datetime.now()
+        
+        # FIX HEURE : On définit l'heure actuelle en France (UTC+1)
+        tz_france = timezone(timedelta(hours=1))
+        now = datetime.now(tz_france)
         
         for prog in root.findall('programme'):
             ch_id = prog.get('channel')
             if ch_id in organized_data:
-                s_str = prog.get('start')[:14]
-                e_str = prog.get('stop')[:14]
-                start_dt = datetime.strptime(s_str, "%Y%m%d%H%M%S")
-                stop_dt = datetime.strptime(e_str, "%Y%m%d%H%M%S")
+                # On parse avec le fuseau horaire du XML (%z)
+                start_dt = datetime.strptime(prog.get('start'), "%Y%m%d%H%M%S %z")
+                stop_dt = datetime.strptime(prog.get('stop'), "%Y%m%d%H%M%S %z")
                 
-                # On ne prend que ce qui n'est pas encore fini
                 if stop_dt > now:
                     icon_tag = prog.find('icon')
                     organized_data[ch_id].append({
@@ -52,22 +51,16 @@ def get_grouped_tv_data():
                         "stop_dt": stop_dt,
                         "title": prog.find('title').text,
                         "category": prog.find('category').text if prog.find('category') is not None else "Autre",
-                        "image": icon_tag.get('src') if icon_tag is not None else None,
-                        "desc": prog.find('desc').text if prog.find('desc') is not None else ""
+                        "image": icon_tag.get('src') if icon_tag is not None else None
                     })
-        
-        # On trie les programmes de chaque chaîne par heure
-        for ch_id in organized_data:
-            organized_data[ch_id].sort(key=lambda x: x['start_dt'])
-            
         return organized_data
-    except Exception as e:
-        st.error(f"Erreur flux : {e}")
+    except:
         return {}
 
 # --- LOGIQUE D'AFFICHAGE ---
+tz_france = timezone(timedelta(hours=1))
+now = datetime.now(tz_france)
 grouped_list = get_grouped_tv_data()
-now = datetime.now()
 
 # On parcourt les chaînes dans l'ordre défini par CHANNELS_ORDER
 for ch_id in CHANNELS_ORDER:
