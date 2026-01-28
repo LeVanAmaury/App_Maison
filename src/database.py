@@ -40,7 +40,7 @@ class FamilyDB:
 
     def get_tasks(self):
         res = self.supabase.table("tasks").select("*").execute()
-        return[(t['task_id'], t['title'], t['assignee'], t['done']) for t in res.data]
+        return[(t['task_id'], t['title'], t['assignee'], t['done'], t['created_by']) for t in res.data]
 
     def toggle_task_status(self, task_id, current_status):
         new_status = not current_status
