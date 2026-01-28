@@ -3,7 +3,16 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-CHANNEL_MAP = {
+# 1. Liste ordonnée des chaînes (pour le tri "réel")
+CHANNELS_ORDER = [
+    "TF1.fr", "France2.fr", "France3.fr", "CanalPlus.fr", "France5.fr", "M6.fr", 
+    "Arte.fr", "C8.fr", "W9.fr", "TMC.fr", "TFX.fr", "NRJ12.fr", "LCP.fr", 
+    "France4.fr", "BFMTV.fr", "CNews.fr", "CStar.fr", "Gulli.fr", 
+    "TF1SeriesFilms.fr", "LEQUIPE.fr", "6ter.fr", "RMCStory.fr", 
+    "RMCDecouverte.fr", "Cherie25.fr"
+]
+
+CHANNEL_NAMES = {
     "TF1.fr": "TF1", "France2.fr": "France 2", "France3.fr": "France 3",
     "CanalPlus.fr": "Canal+", "France5.fr": "France 5", "M6.fr": "M6",
     "Arte.fr": "Arte", "C8.fr": "C8", "W9.fr": "W9", "TMC.fr": "TMC",
@@ -14,68 +23,100 @@ CHANNEL_MAP = {
     "RMCDecouverte.fr": "RMC Découverte", "Cherie25.fr": "Chérie 25"
 }
 
-st.title("📺 Programme TV")
+st.title("📺 Grille TV par chaîne")
 
 @st.cache_data(ttl=300)
-def get_tv_data():
+def get_grouped_tv_data():
     url = "https://xmltvfr.fr/xmltv/xmltv_fr.xml"
     try:
         response = requests.get(url)
         root = ET.fromstring(response.content)
-        programs = []
+        
+        # On organise les données par chaîne : { 'TF1.fr': [prog1, prog2...], ... }
+        organized_data = {ch_id: [] for ch_id in CHANNELS_ORDER}
         now = datetime.now()
         
         for prog in root.findall('programme'):
             ch_id = prog.get('channel')
-            if ch_id in CHANNEL_MAP:
+            if ch_id in organized_data:
                 s_str = prog.get('start')[:14]
                 e_str = prog.get('stop')[:14]
                 start_dt = datetime.strptime(s_str, "%Y%m%d%H%M%S")
                 stop_dt = datetime.strptime(e_str, "%Y%m%d%H%M%S")
                 
+                # On ne prend que ce qui n'est pas encore fini
                 if stop_dt > now:
                     icon_tag = prog.find('icon')
-                    programs.append({
-                        "channel": CHANNEL_MAP[ch_id],
+                    organized_data[ch_id].append({
                         "start_dt": start_dt,
                         "stop_dt": stop_dt,
                         "title": prog.find('title').text,
-                        "desc": prog.find('desc').text if prog.find('desc') is not None else "",
                         "category": prog.find('category').text if prog.find('category') is not None else "Autre",
-                        "image": icon_tag.get('src') if icon_tag is not None else None
+                        "image": icon_tag.get('src') if icon_tag is not None else None,
+                        "desc": prog.find('desc').text if prog.find('desc') is not None else ""
                     })
-        programs.sort(key=lambda x: x['start_dt'])
-        return programs
-    except:
-        return []
+        
+        # On trie les programmes de chaque chaîne par heure
+        for ch_id in organized_data:
+            organized_data[ch_id].sort(key=lambda x: x['start_dt'])
+            
+        return organized_data
+    except Exception as e:
+        st.error(f"Erreur flux : {e}")
+        return {}
 
-tv_list = get_tv_data()
+# --- LOGIQUE D'AFFICHAGE ---
+grouped_list = get_grouped_tv_data()
 now = datetime.now()
 
-if not tv_list:
-    st.info("Aucun programme trouvé.")
-else:
-    for p in tv_list[:20]:
-        with st.container(border=True):
-            col_h, col_img, col_txt = st.columns([0.15, 0.25, 0.6])
-            
-            with col_h:
-                st.subheader(p['start_dt'].strftime("%Hh%M"))
-            
-            with col_img:
-                if p['image']:
-                    st.image(p['image'], use_container_width=True)
-            
-            with col_txt:
-                st.markdown(f"**{p['channel']}** : {p['title']}")
-                st.caption(f"🎭 {p['category']}")
+# On parcourt les chaînes dans l'ordre défini par CHANNELS_ORDER
+for ch_id in CHANNELS_ORDER:
+    progs = grouped_list.get(ch_id, [])
+    if not progs:
+        continue
+    
+    # On identifie le programme actuel et le suivant
+    current_p = None
+    next_p = None
+    
+    for p in progs:
+        if p['start_dt'] <= now <= p['stop_dt']:
+            current_p = p
+        elif p['start_dt'] > now:
+            next_p = p
+            break # On prend le premier qui commence après "maintenant"
+
+    # Si on n'a rien en cours, on saute la chaîne (ou on affiche la prochaine directement)
+    if not current_p and not next_p:
+        continue
+
+    # --- RENDU DE LA CARTE CHAÎNE ---
+    with st.container(border=True):
+        # Header de la chaîne
+        st.markdown(f"## {CHANNEL_NAMES[ch_id]}")
+        
+        # Colonnes pour le programme en cours
+        col_img, col_info = st.columns([0.3, 0.7])
+        
+        with col_img:
+            if current_p and current_p['image']:
+                st.image(current_p['image'], use_container_width=True)
+            else:
+                st.write("📺")
+
+        with col_info:
+            if current_p:
+                st.markdown(f"**EN DIRECT : {current_p['title']}**")
+                st.caption(f"🕒 {current_p['start_dt'].strftime('%H:%M')} - {current_p['stop_dt'].strftime('%H:%M')} | {current_p['category']}")
                 
-                if p['start_dt'] <= now <= p['stop_dt']:
-                    total = (p['stop_dt'] - p['start_dt']).total_seconds()
-                    past = (now - p['start_dt']).total_seconds()
-                    progression = min(past / total, 1.0)
-                    st.progress(progression, text=f"Direct : {int(progression*100)}%")
-                
-                if p['desc']:
-                    with st.expander("Détails"):
-                        st.write(p['desc'])
+                # Barre de progression
+                total = (current_p['stop_dt'] - current_p['start_dt']).total_seconds()
+                past = (now - current_p['start_dt']).total_seconds()
+                progression = min(max(past / total, 0.0), 1.0)
+                st.progress(progression)
+            else:
+                st.info("Aucun programme en cours.")
+
+        # Affichage du programme suivant (plus discret)
+        if next_p:
+            st.markdown(f"➡️ **À SUIVRE :** {next_p['start_dt'].strftime('%H:%M')} - **{next_p['title']}**")
