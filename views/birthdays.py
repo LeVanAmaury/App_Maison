@@ -30,5 +30,9 @@ for b_id, b_name, b_date in birthdays:
 
     col1, col2 = st.columns([0.8,0.2])
     col1.write(f"**{b_name}** - {b_date_obj.strftime('%d/%m')} (dans {days_left} jours)")
-    if days_left == 0:
+    if col2.button("Supprimer",key=f"birthday_{b_id}"):
+        db.remove_birthday(b_id)
+        st.success(f"Anniversaire de {b_name} supprimé !")
+        st.rerun()
+    if days_left == -1:
         st.balloons()

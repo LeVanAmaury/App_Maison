@@ -54,6 +54,9 @@ class FamilyDB:
     def get_birthdays(self):
         res = self.supabase.table("birthdays").select("*").order("date").execute()
         return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
+    
+    def remove_birthday(self, birthday_id):
+        self.supabase.table("birthdays").delete().eq("birthday_id", birthday_id).execute()
         
     #Gestion des notes
     #---------------------------------------------------------------------------------------- 

@@ -26,7 +26,7 @@ if not tasks:
     st.info("Aucune tâche pour le moment.")
 else:
     for t_id, t_title, t_member, t_done in tasks:
-        col1, col2 = st.columns([0.8, 0.2])
+        col1, col2, col3 = st.columns([0.7, 0.1, 0.2])
         
         label = f"~~{t_title}~~" if t_done else t_title
         col1.write(f"**{t_member}** : {label}")
@@ -35,3 +35,8 @@ else:
         if col2.button(icon, key=f"toggle_{t_id}"):
             db.toggle_task_status(t_id, t_done)
             st.rerun()
+        
+        if col3.button("Supprimer", key=f"task_{t_id}"):
+            db.remove_task(t_id)
+            db.success("Tâche supprimée avec succès")
+            db.rerun()
