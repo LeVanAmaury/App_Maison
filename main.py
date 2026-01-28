@@ -3,11 +3,26 @@ from src.database import FamilyDB
 
 st.set_page_config(page_title="Famille", page_icon="🏠", layout="wide")
 
-@st.cache_resource      # Pour ne pas recréer la connexion à chaque clic
-def get_db():
-    return FamilyDB()
+FAMILY_MEMBERS = ["Amaury", "Thais", "Corentin", "Maman", "Papoune"]
 
-db = get_db()
+def login():
+    if "user" not in st.session_state:
+        st.sidebar.title("Connexion")
+        user = st.sidebar.selectbox("Qui es-tu ?", [""] + FAMILY_MEMBERS)
+
+        if user != "":
+            st.session_state["user"] = user
+            st.sidebar.success(f"Salut {user} !")
+            st.rerun()
+        else:
+            st.warning("Choisis ton nom pour entrer dans la maison")
+            st.stop()
+    
+    else:
+        st.sidebar.write(f"Connecté : **{st.session_state['user']}**")
+        if st.sidebar.button("Déconnexion"):
+            del st.session_state["user"]
+            st.rerun()
 
 dashboard_page = st.Page("views/dashboard.py", title="Tableau de bord", icon="📊", default=True)
 tasks_page = st.Page("views/tasks.py", title="Tâches", icon="📝")

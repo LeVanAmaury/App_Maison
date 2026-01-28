@@ -32,8 +32,8 @@ class FamilyDB:
 
     # Gestion des tâches
     #---------------------------------------------------------------------------------------- 
-    def add_task(self, title, assignee):
-        self.supabase.table("tasks").insert({"title": title, "assignee": assignee}).execute()
+    def add_task(self, title, assignee, creator):
+        self.supabase.table("tasks").insert({"title": title, "assignee": assignee, "created_by": creator, "done": False}).execute()
 
     def remove_task(self, task_id):
         self.supabase.table("tasks").delete().eq("task_id", task_id).execute()
@@ -60,12 +60,12 @@ class FamilyDB:
         
     #Gestion des notes
     #---------------------------------------------------------------------------------------- 
-    def add_note(self, content):
-        self.supabase.table("notes").insert({"content": content}).execute()
+    def add_note(self, content, author):
+        self.supabase.table("notes").insert({"content": content, "author": author}).execute()
 
     def get_notes(self):
         res = self.supabase.table("notes").select("*").order("created_at", desc=True).execute()
-        return [(n['note_id'], n['content'], n['created_at']) for n in res.data]
+        return [(n['note_id'], n['content'], n['created_at'], n.get('author', 'Anonyme')) for n in res.data]
         
     def delete_note(self, note_id):
         self.supabase.table("notes").delete().eq("note_id", note_id).execute()
