@@ -1,28 +1,25 @@
 import streamlit as st
 from src.database import FamilyDB
 
-st.set_page_config(page_title="Famille", page_icon="🏠", layout="wide")
+MEMBRES = ["Amaury", "Thais", "Corentin", "Maman", "Papoune"]
 
-FAMILY_MEMBERS = ["Amaury", "Thais", "Corentin", "Maman", "Papoune"]
-
-def login():
-    if "user" not in st.session_state:
-        st.sidebar.title("Connexion")
-        user = st.sidebar.selectbox("Qui es-tu ?", [""] + FAMILY_MEMBERS)
-
-        if user != "":
-            st.session_state["user"] = user
-            st.sidebar.success(f"Salut {user} !")
-            st.rerun()
-        else:
-            st.warning("Choisis ton nom pour entrer dans la maison")
-            st.stop()
+if "user" not in st.session_state:
+    st.title("🏠 Bienvenue dans la Maison")
+    st.write("Veuillez vous identifier pour accéder au hub familial.")
     
+    user_choice = st.selectbox("Qui es-tu ?", [""] + MEMBRES)
+    
+    if user_choice != "":
+        st.session_state["user"] = user_choice
+        st.success(f"Salut {user_choice} ! Chargement...")
+        st.rerun()
     else:
-        st.sidebar.write(f"Connecté : **{st.session_state['user']}**")
-        if st.sidebar.button("Déconnexion"):
-            del st.session_state["user"]
-            st.rerun()
+        st.stop()
+
+st.sidebar.write(f"Connecté en tant que : **{st.session_state['user']}**")
+if st.sidebar.button("Se déconnecter"):
+    del st.session_state["user"]
+    st.rerun()
 
 dashboard_page = st.Page("views/dashboard.py", title="Tableau de bord", icon="📊", default=True)
 tasks_page = st.Page("views/tasks.py", title="Tâches", icon="📝")
