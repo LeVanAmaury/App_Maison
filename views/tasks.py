@@ -38,5 +38,5 @@ else:
         
         if col3.button("Supprimer", key=f"task_{t_id}"):
             db.remove_task(t_id)
-            db.success("Tâche supprimée avec succès")
-            db.rerun()
+            st.success("Tâche supprimée avec succès")
+            st.rerun()
