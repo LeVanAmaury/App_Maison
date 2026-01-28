@@ -49,15 +49,11 @@ class FamilyDB:
     #Gestion des anniversaires
     #---------------------------------------------------------------------------------------- 
     def add_birthday(self, name, date_str):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("INSERT INTO birthdays (name, date) VALUES (?,?)", [name,date_str])
-            conn.commit()
+        self.supabase.table("birthdays").insert({"name":name, "date":date_str}).execute()
 
     def get_birthdays(self):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM birthdays ORDER BY date ASC")
-            return cursor.fetchall()
+        res = self.supabase.table("birthdays").select("*").order("date", asc=True).execute()
+        return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
         
     #Gestion des notes
     #---------------------------------------------------------------------------------------- 
