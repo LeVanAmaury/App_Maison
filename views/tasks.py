@@ -6,7 +6,7 @@ db = get_db()
 st.title("Liste des tâches")
 
 # --- SECTION AJOUT DE TÂCHE ---
-with st.form("add_task_form"):
+with st.form("add_task_form", clear_on_submit=True):
     task_text = st.text_input("Quelle est la tâche ?")
     member = st.selectbox("Pour qui ?", ["Amaury", "Thais" , "Corentin", "Maman", "Papoune"])
     submit = st.form_submit_button("Ajouter la tache")

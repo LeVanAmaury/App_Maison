@@ -6,11 +6,12 @@ st.title("Liste de courses")
 
 # --- SECTION AJOUT DE COURSES ---
 with st.container(border=True):
-    new_item = st.text_input("Ajouter un article")
-    if st.button("Ajouter à la liste"):
-        if new_item:
-            db.add_shopping_item(new_item)
-            st.rerun()
+    with st.form("shopping_form", clear_on_submit=True):
+        new_item = st.text_input("Ajouter un article")
+        if st.button("Ajouter à la liste"):
+            if new_item:
+                db.add_shopping_item(new_item)
+                st.rerun()
 
 st.divider()
 
