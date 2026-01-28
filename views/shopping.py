@@ -8,7 +8,7 @@ st.title("Liste de courses")
 with st.container(border=True):
     with st.form("shopping_form", clear_on_submit=True):
         new_item = st.text_input("Ajouter un article")
-        if st.button("Ajouter à la liste"):
+        if st.form_submit_button("Ajouter à la liste"):
             if new_item:
                 db.add_shopping_item(new_item)
                 st.rerun()

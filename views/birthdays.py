@@ -9,7 +9,7 @@ with st.expander("Ajouter un anniversaire"):
     with st.form("birthdays_form", clear_on_submit=True):
         name = st.text_input("Nom")
         date = st.date_input("Date de naissance", min_value = datetime(1900, 1, 1))
-        if st.button("Enregistrer"):
+        if st.form_submit_button("Enregistrer"):
             db.add_birthday(name, date.strftime("%Y-%m-%d"))
             st.success(f"Anniversaire de {name} ajouté !")
             st.rerun()
