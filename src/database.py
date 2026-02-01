@@ -54,6 +54,22 @@ class FamilyDB:
     def get_birthdays(self):
         res = self.supabase.table("birthdays").select("*").order("date").execute()
         return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
+    
+    # Gestion des menus de la semaine
+    #----------------------------------------------------------------------------------------
+    def add_menu_item(self, day, meal_type, dish):
+        self.supabase.table("weekly_menu").insert({
+            "day": day,
+            "meal_type": meal_type,
+            "dish": dish
+        }).execute()
+
+    def get_menu(self):
+        res = self.supabase.table("weekly_menu").select("*").execute()
+        return res.data
+    
+    def clear_menu_item(self, item_id):
+        self.supabase.table("weekly_menu").delete().eq("item_id", item_id).execute()
 
 @st.cache_resource
 def get_db():
