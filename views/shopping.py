@@ -15,9 +15,9 @@ else:
 
 # --- SECTION AJOUT DE COURSES ---
 with st.container(border=True):
-    st.write("### ➕ Ajouter un article")
+    st.write("### Ajouter un article")
     with st.form("global_add_form", clear_on_submit=True):
-        col_txt, col_cat, col_btn = st.columns({0.5,0.3,0.2})
+        col_txt, col_cat, col_btn = st.columns([0.5,0.3,0.2])
 
         with col_txt:
             new_item = st.text_input("Objet à acheter", placeholder='Ex: Fromage')

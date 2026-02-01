@@ -1,4 +1,3 @@
-import sqlite3
 import streamlit as st
 import os
 from supabase import create_client, Client
@@ -7,98 +6,54 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class FamilyDB:
-
-# Initialisation de la base
-#----------------------------------------------------------------------------------------
-    def __init__(self, db_path="app_maison.db"):
+    def __init__(self):
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_KEY")
         if url and key:
             self.supabase: Client = create_client(url, key)
         else:
-            st.error("Config supabase manquante dans le .env !")
+            st.error("Config supabase manquante dans les Secrets !")
 
-# Gestion de la liste de course
-#----------------------------------------------------------------------------------------
-    def add_shopping_item(self,item,list_category):
-        self.supabase.table("shopping_list").insert({"item": item, 'list_category':list_category}).execute()
+    # --- COURSES ---
+    def add_shopping_item(self, item, list_category):
+        self.supabase.table("shopping_list").insert({
+            "item": item, 
+            "list_category": list_category
+        }).execute()
 
-    def remove_shopping_item(self,item_id):
+    def remove_shopping_item(self, item_id):
         self.supabase.table("shopping_list").delete().eq("item_id", item_id).execute()
 
     def get_shopping_list(self):
         res = self.supabase.table("shopping_list").select("*").execute()
         return res.data
 
-    # Gestion des tâches
-    #---------------------------------------------------------------------------------------- 
+    # --- TÂCHES ---
     def add_task(self, title, assignee, creator):
-        self.supabase.table("tasks").insert({"title": title, "assignee": assignee, "created_by": creator, "done": False}).execute()
-
-    def remove_task(self, task_id):
-        self.supabase.table("tasks").delete().eq("task_id", task_id).execute()
+        self.supabase.table("tasks").insert({
+            "title": title, "assignee": assignee, 
+            "created_by": creator, "done": False
+        }).execute()
 
     def get_tasks(self):
         res = self.supabase.table("tasks").select("*").execute()
-        return[(t['task_id'], t['title'], t['assignee'], t['done'], t['created_by']) for t in res.data]
+        return [(t['task_id'], t['title'], t['assignee'], t['done'], t['created_by']) for t in res.data]
 
     def toggle_task_status(self, task_id, current_status):
-        new_status = not current_status
-        self.supabase.table("tasks").update({"done": new_status}).eq("task_id", task_id).execute()
+        self.supabase.table("tasks").update({"done": not current_status}).eq("task_id", task_id).execute()
 
-    #Gestion des anniversaires
-    #---------------------------------------------------------------------------------------- 
-    def add_birthday(self, name, date_str):
-        self.supabase.table("birthdays").insert({"name":name, "date":date_str}).execute()
-
-    def get_birthdays(self):
-        res = self.supabase.table("birthdays").select("*").order("date").execute()
-        return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
-    
-    def remove_birthday(self, birthday_id):
-        self.supabase.table("birthdays").delete().eq("birthday_id", birthday_id).execute()
-        
-    #Gestion des notes
-    #---------------------------------------------------------------------------------------- 
-    def add_note(self, content, author):
-        self.supabase.table("notes").insert({"content": content, "author": author}).execute()
-
+    # --- NOTES ---
     def get_notes(self):
         res = self.supabase.table("notes").select("*").order("created_at", desc=True).execute()
         return [(n['note_id'], n['content'], n['created_at'], n.get('author', 'Anonyme')) for n in res.data]
-        
+
     def delete_note(self, note_id):
         self.supabase.table("notes").delete().eq("note_id", note_id).execute()
 
-    # Gestion de la liste de course
-    #----------------------------------------------------------------------------------------
-    def add_upgrade(self,upgrade_name):
-        self.supabase.table("upgrades").insert({"upgrade_name": upgrade_name}).execute()
-
-    def remove_upgrade(self,upgrade_id):
-        self.supabase.table("upgrades").delete().eq("upgrade_id", upgrade_id).execute()
-
-    def get_upgrades(self):
-        res = self.supabase.table("upgrades").select("*").execute()
-        return[(i['upgrade_id'], i['upgrade_name']) for i in res.data]
-    
-    # Gestion des menus de la semaine
-    #----------------------------------------------------------------------------------------
-    def add_menu_item(self, day, meal_type, dish):
-        self.supabase.table("weekly_menu").insert({
-            "day": day,
-            "meal_type": meal_type,
-            "dish": dish
-        }).execute()
-
-    def get_menu(self):
-        res = self.supabase.table("weekly_menu").select("*").execute()
-        return res.data
-    
-    def clear_menu_item(self, item_id):
-        self.supabase.table("weekly_menu").delete().eq("item_id", item_id).execute()
-
-    
+    # --- ANNIVERSAIRES ---
+    def get_birthdays(self):
+        res = self.supabase.table("birthdays").select("*").order("date").execute()
+        return [(b['birthday_id'], b['name'], b['date']) for b in res.data]
 
 @st.cache_resource
 def get_db():
