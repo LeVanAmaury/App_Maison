@@ -16,7 +16,7 @@ else:
 col_action1, col_action2 = st.columns(2)
 
 with col_action1:
-    with st.expander("➕ Ajouter un article", expanded=True):
+    with st.expander("Ajouter un objet", expanded=True):
         with st.form("quick_add", clear_on_submit=True):
             target_cat = st.selectbox("Dans quelle liste ?", categories)
             item_name = st.text_input("Quoi acheter ?")
@@ -26,13 +26,12 @@ with col_action1:
                     st.rerun()
 
 with col_action2:
-    with st.expander("🆕 Créer une nouvelle liste"):
+    with st.expander("Créer une nouvelle liste de courses"):
         with st.form("new_list_form", clear_on_submit=True):
-            new_cat = st.text_input("Nom de la liste", placeholder="Ex: Mariage")
-            first_item = st.text_input("Premier article")
+            new_cat = st.text_input("Nom de la liste", placeholder="Ex: Anniversaire")
             if st.form_submit_button("Créer la liste"):
-                if new_cat and first_item:
-                    db.add_shopping_item(first_item, new_cat)
+                if new_cat:
+                    db.add_shopping_item("", new_cat)
                     st.rerun()
 
 st.divider()
