@@ -20,15 +20,15 @@ class FamilyDB:
 
 # Gestion de la liste de course
 #----------------------------------------------------------------------------------------
-    def add_shopping_item(self,item):
-        self.supabase.table("shopping_list").insert({"item": item}).execute()
+    def add_shopping_item(self,item,list_category):
+        self.supabase.table("shopping_list").insert({"item": item, 'list_category':list_category}).execute()
 
     def remove_shopping_item(self,item_id):
         self.supabase.table("shopping_list").delete().eq("item_id", item_id).execute()
 
     def get_shopping_list(self):
         res = self.supabase.table("shopping_list").select("*").execute()
-        return[(i['item_id'], i['item']) for i in res.data]
+        return res.data
 
     # Gestion des tâches
     #---------------------------------------------------------------------------------------- 
