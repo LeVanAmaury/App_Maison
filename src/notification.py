@@ -14,7 +14,7 @@ def send_private_notification(message, target_member):
             requests.post(f"https://ntfy.sh/{topic}",
                 data=message.encode('utf-8'),
                 headers={
-                    'Title':'Nouvelle tâche assignée',
+                    'Title':'Nouvelle tache assignee',
                     'Priority':'high',
                     'Tags':'clipboard,memo'
                 }
