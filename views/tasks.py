@@ -1,6 +1,6 @@
 import streamlit as st
 from src.database import get_db
-from src.notification import send_family_notification
+from src.notification import send_private_notification
 db = get_db()
 
 st.title("Liste des tâches")
@@ -14,7 +14,7 @@ with st.form("add_task_form", clear_on_submit=True):
     if submit and task_text:
         db.add_task(task_text, member, st.session_state["user"])
         notification_msg = f"Nouvelle mission de {st.session_state["user"]} : {task_text}"
-        send_family_notification(notification_msg, member)
+        send_private_notification(notification_msg, member)
         st.success(f"Tâche ajoutée et norification envoyée à {member} !")
         st.rerun()
 
