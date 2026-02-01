@@ -23,7 +23,7 @@ with col1:
         st.error("Météo indisponible")
 
 with col2:
-    st.info(f"📅 **{datetime.now().strftime('%d %B %Y')}**")
+    st.info(f"Aujourd'hui nous sommes le **{datetime.now().strftime('%d %B %Y')}**")
     st.write(f"👤 Utilisateur : **{st.session_state.get('user', 'Anonyme')}**")
 
 st.divider()
@@ -45,7 +45,7 @@ if notes:
         with cols[i % 3]:
             with st.container(border=True):
                 st.write(n_content)
-                st.caption(f"✍️ {n_author} • {n_date[:10]}")
+                st.caption(f"{n_author} • {n_date[:10]}")
                 if st.button("🗑️", key=f"note_{n_id}"):
                     db.delete_note(n_id)
                     st.rerun()
