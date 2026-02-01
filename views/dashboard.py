@@ -6,32 +6,35 @@ from src.weather import get_weather
 db = get_db()
 st.title("📊 Tableau de bord familial")
 
+# --- MÉTÉO ET DATE ---
 city_weather = 'Saint-Sulpice'
 w = get_weather(city_weather)
 col1, col2 = st.columns(2)
 
 with col1:
     if w:
-        col_icon, col_temp = st.columns([0.2,0.8])
+        col_icon, col_temp = st.columns([0.3, 0.7])
         with col_icon:
             icon_url = f"https://openweathermap.org/img/wn/{w['icon']}@2x.png"
-            st.image(icon_url, width=100)
+            st.image(icon_url, width=80)
         with col_temp:
             st.metric(label=f"Météo à {city_weather}", value=f"{w['temp']}°C", delta=w['desc'])
     else:
         st.error("Météo indisponible")
 
 with col2:
-    st.info(f"Aujourd'hui nous sommes le **{datetime.now().strftime('%d %B %Y')}**")
+    st.info(f"📅 **{datetime.now().strftime('%d %B %Y')}**")
+    st.write(f"👤 Utilisateur : **{st.session_state.get('user', 'Anonyme')}**")
 
 st.divider()
 
-st.write("### Le mur de la famille")
+# --- LE MUR DE NOTES ---
+st.write("### 📝 Le mur de la famille")
 with st.expander("Laisser un petit mot sur le mur"):
     with st.form("note_form", clear_on_submit=True):
-        note_text = st.text_area("Ton message :", placeholder="Met ce que tu veux")
-        if st.form_submit_button("Epingler au mur") and note_text:
-            db.add_note(note_text,st.session_state["user"])
+        note_text = st.text_area("Ton message :", placeholder="Écris quelque chose de sympa...")
+        if st.form_submit_button("Épingler au mur") and note_text:
+            db.add_note(note_text, st.session_state["user"])
             st.success("Note ajoutée !")
             st.rerun()
 
@@ -40,28 +43,42 @@ if notes:
     cols = st.columns(3)
     for i, (n_id, n_content, n_date, n_author) in enumerate(notes):
         with cols[i % 3]:
-            st.info(f"{n_content}\n\n*Posté par {n_author} le {n_date[:10]}*")
-            if st.button("Supprimer", key=f"note_{n_id}"):
-                db.delete_note(n_id)
-                st.rerun()
+            with st.container(border=True):
+                st.write(n_content)
+                st.caption(f"✍️ {n_author} • {n_date[:10]}")
+                if st.button("🗑️", key=f"note_{n_id}"):
+                    db.delete_note(n_id)
+                    st.rerun()
 else:
-    st.info("Aucune notes pour le moment. Ajoute en une !")
+    st.info("Le mur est vide.")
 
 st.divider()
 
+# --- DERNIÈRES ACTIVITÉS (Shopping & Tasks) ---
 c1, c2 = st.columns(2)
+
 with c1:
-    st.write("### Dernières choses ajoutées au courses")
-    if db.get_shopping_list():
-        for item in db.get_shopping_list()[:5]:
-            st.write(f"- {item[1]}")
+    st.write("### 🛒 Derniers ajouts courses")
+    shopping_data = db.get_shopping_list() # Récupère les dictionnaires
+    
+    if shopping_data:
+        # On trie par ID décroissant pour avoir les derniers ajoutés en premier
+        latest_shopping = sorted(shopping_data, key=lambda x: x['item_id'], reverse=True)[:5]
+        for item in latest_shopping:
+            # On affiche l'article ET sa catégorie
+            st.write(f"• **{item['item']}** (dans *{item['list_category']}*)")
     else:
-        st.info("Aucune courses pour le moment")
+        st.info("Aucun article à acheter.")
 
 with c2:
-    st.write("### ⚠️ Dernières tâches ajoutées")
-    if db.get_tasks():
-        for task in db.get_tasks()[:5]:
-            st.write(f"- **{task[2]}** : {task[1]}")
+    st.write("### ⚠️ Dernières tâches créées")
+    tasks_data = db.get_tasks() # Récupère les tuples
+    
+    if tasks_data:
+        # On trie par task_id (index 0 du tuple) décroissant
+        latest_tasks = sorted(tasks_data, key=lambda x: x[0], reverse=True)[:5]
+        for t_id, t_title, t_assignee, t_done, t_creator in latest_tasks:
+            status = "✅" if t_done else "⏳"
+            st.write(f"{status} **{t_title}** → {t_assignee}")
     else:
-        st.info("Aucune tâches pour le moment")
+        st.info("Toutes les corvées sont finies !")
