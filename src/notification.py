@@ -1,20 +1,27 @@
 import requests
 
-def send_family_notification(message, title="Family Hub"):
-    topic = "famille_caudiu_levan"
-    url = f"https://ntfy.sh/{topic}"
-
-    try:
-        requests.post(
-            url,
-            data=message.encode('utf-8'),
-            headers={
-                "Title": title,
-                "Priority": "default",
-                "Tags": "house_with_garden,bell"
-            }
-        )
-        return True
-    except Exception as e:
-        print(f"Erreur ntfy : {e}")
+def send_private_notification(message, target_member):
+    topics = {
+        'Amaury': "famille_caudiu_levan_amaury",
+        'Corentin': "famille_caudiu_levan_corentin",
+        'Thais': "famille_caudiu_levan_thais",
+        'Papoune': 'famille_caudiu_levan_papoune',
+        'Maman': 'famille_caudiu_levan_maman'
+    }
+    topic=topics.get(target_member)
+    if topic:
+        try:
+            requests.post(f"https://ntfy.sh/{topic}",
+                data=message.encode('utf-8'),
+                headers={
+                    'Title':'Nouvelle tâche assignée',
+                    'Priority':'high',
+                    'Tags':'clipboard,memo'
+                }
+            )
+            return True
+        except Exception as err:
+            print(f'Erreur ntfy : {err}')
+            return False
+    else:
         return False

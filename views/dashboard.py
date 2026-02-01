@@ -51,7 +51,7 @@ st.divider()
 
 c1, c2 = st.columns(2)
 with c1:
-    st.write("### Dernières choses ajoutée au courses")
+    st.write("### Dernières choses ajoutées au courses")
     if db.get_shopping_list():
         for item in db.get_shopping_list()[:5]:
             st.write(f"- {item[1]}")
@@ -59,7 +59,7 @@ with c1:
         st.info("Aucune courses pour le moment")
 
 with c2:
-    st.write("### ⚠️ Dernières tâches ajoutée")
+    st.write("### ⚠️ Dernières tâches ajoutées")
     if db.get_tasks():
         for task in db.get_tasks()[:5]:
             st.write(f"- **{task[2]}** : {task[1]}")
