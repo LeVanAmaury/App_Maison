@@ -79,6 +79,6 @@ with c2:
         latest_tasks = sorted(tasks_data, key=lambda x: x[0], reverse=True)[:5]
         for t_id, t_title, t_assignee, t_done, t_creator in latest_tasks:
             status = "✅" if t_done else "⏳"
-            st.write(f"{status} **{t_title}** → {t_assignee}")
+            st.write(f"{status} **{t_title}** → {','.join(map(str,t_assignee))}")
     else:
         st.info("Toutes les corvées sont finies !")
