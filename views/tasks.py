@@ -25,6 +25,11 @@ tasks = db.get_tasks()
 if not tasks:
     st.info("Aucune tâche pour le moment.")
 else:
+    col_f, col_empty = st.columns([0.4,0.6])
+    with col_f:
+        show_only_todo = st.toggle("N'afficher que les tâches à faire", value=False)
+    if show_only_todo:
+        tasks = [t for t in tasks if t[3] == False]
     for t_id, t_title, t_member, t_done, t_created_by in tasks:
         col1, col2, col3 = st.columns([0.7, 0.1, 0.2])
         
