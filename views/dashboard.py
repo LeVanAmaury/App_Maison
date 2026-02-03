@@ -13,10 +13,10 @@ col1, col2 = st.columns(2)
 
 with col1:
     if w:
-        col_icon, col_temp = st.columns([0.3, 0.7])
+        col_icon, col_temp = st.columns([0.2,0.8])
         with col_icon:
             icon_url = f"https://openweathermap.org/img/wn/{w['icon']}@2x.png"
-            st.image(icon_url, width=80)
+            st.image(icon_url, width=100)
         with col_temp:
             st.metric(label=f"Météo à {city_weather}", value=f"{w['temp']}°C", delta=w['desc'])
     else:
@@ -41,14 +41,22 @@ with st.expander("Laisser un petit mot sur le mur"):
 notes = db.get_notes()
 if notes:
     cols = st.columns(3)
-    for i, (n_id, n_content, n_date, n_author) in enumerate(notes):
+    for i, (n_id, n_content, n_date, n_author,n_read_by) in enumerate(notes):
+        lecteurs = n_read_by if n_read_by else []
+        current_user = st.session_state['user']
+        if current_user not in lecteurs:
+            if current_user != n_author:
+                db.mark_note_as_read(n_id, current_user)
         with cols[i % 3]:
             with st.container(border=True):
                 st.write(n_content)
                 st.caption(f"{n_author} • {n_date[:10]}")
-                if st.button("🗑️", key=f"note_{n_id}"):
+                col_button_suppr, col_read_by = st.columns([0.2,0.8])
+                if col_button_suppr.button("🗑️", key=f"note_{n_id}"):
                     db.delete_note(n_id)
                     st.rerun()
+                if col_read_by:
+                    st.caption(','.join(map(str,n_read_by)))
 else:
     st.info("Le mur est vide.")
 

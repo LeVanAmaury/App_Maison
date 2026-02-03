@@ -48,7 +48,18 @@ class FamilyDB:
 
     def get_notes(self):
         res = self.supabase.table("notes").select("*").order("created_at", desc=True).execute()
-        return [(n['note_id'], n['content'], n['created_at'], n.get('author', 'Anonyme')) for n in res.data]
+        return [(n['note_id'], n['content'], n['created_at'], n.get('author', 'Anonyme'), n.get('read_by', [])) for n in res.data]
+
+    def mark_note_as_read(self, note_id, user_name):
+        res = self.supabase.table("notes").select("read_by").eq("note_id", note_id).execute()
+        if res.data:
+            current_readers = res.data[0].get('read_by')
+            if current_readers is None:
+                current_readers = []
+            if user_name not in current_readers:
+                current_readers.append(user_name)
+                self.supabase.table("notes").update({"read_by": current_readers}).eq("note_id", note_id).execute()
+
 
     def delete_note(self, note_id):
         self.supabase.table("notes").delete().eq("note_id", note_id).execute()
