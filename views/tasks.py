@@ -31,8 +31,8 @@ else:
         label = f"~~{t_title}~~" if t_done else t_title
         col1.write(f"Tâche de **{t_created_by}** pour **{t_member}** : {label}")
         
-        icon = "✅" if t_done else "⏳"
-        if col2.button(icon, key=f"toggle_{t_id}"):
+        status_done_button = "Fait" if t_done else "A faire"
+        if col2.button(status_done_button, key=f"toggle_{t_id}"):
             db.toggle_task_status(t_id, t_done)
             st.rerun()
         
