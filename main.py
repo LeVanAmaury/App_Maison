@@ -28,7 +28,7 @@ birthdays_page = st.Page("views/birthdays.py", title="Annviversaires", icon="�
 tv_page = st.Page("views/tv.py", title="Programme TV", icon="📺")
 upgrade_page = st.Page("views/upgrades.py", title="Améliorations", icon="🆙")
 menu_page = st.Page("views/menu.py", title="Menu", icon="🍛")
-douches_page = st.Page("views/douchse.py", title="Douches", icon='🚿')
+douches_page = st.Page("views/douches.py", title="Douches", icon='🚿')
 
 
 pg = st.navigation([dashboard_page, tasks_page, shopping_page, birthdays_page, tv_page, upgrade_page, menu_page, douches_page])
