@@ -51,7 +51,7 @@ if notes:
             with st.container(border=True):
                 st.write(n_content)
                 st.caption(f"{n_author} • {n_date[:10]}")
-                col_button_suppr, col_read_by = st.columns([0.2,0.8])
+                col_button_suppr, col_read_by = st.columns([0.4,0.6])
                 if col_button_suppr.button("🗑️", key=f"note_{n_id}"):
                     db.delete_note(n_id)
                     st.rerun()
