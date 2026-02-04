@@ -115,6 +115,20 @@ class FamilyDB:
     def remove_shower(self,shower_id):
         self.supabase.table('douches').delete().eq('douche_id', shower_id).execute()
 
+
+    # --- PLANNING CALENDAR ---
+    def get_calendar(self, start_date, end_date):
+        res = self.supabase.table('family_calendar').select('*').gte('event_date', start_date).lte('event_date', end_date).order('start_time').execute()
+        return res.data
+    
+    def add_calendar(self, name, date, start, end, member):
+        """Ajoute un événement au calendrier."""
+        self.supabase.table("family_calendar").insert({"event_name": name,"event_date": date,"start_time": start,"end_time": end,"member": member}).execute()
+
+    def remove_event(self, event_id):
+        self.supabase.table('family_calendar').delete().eq('calendar_id', event_id).execute()
+        
+
 @st.cache_resource
 def get_db():
     return FamilyDB()
