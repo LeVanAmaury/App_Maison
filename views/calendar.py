@@ -1,112 +1,101 @@
 import streamlit as st
-from datetime import datetime, date, timedelta
-from src.database import get_db
+from streamlit_calendar import calendar
+from datetime import datetime, timedelta
 
-st.set_page_config(layout="wide")
-db = get_db()
+def show_calendar():
+    # 1. Configuration de la page et style CSS pour Mobile
+    # On injecte du CSS pour maximiser l'espace et éviter le "glissement" latéral sur mobile [4, 3, 5]
+    st.markdown("""
+        <style>
+            /* Supprime les marges excessives en haut de page */
+            [data-testid="block-container"] {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            /* Empêche le scroll horizontal parasite sur smartphone */
+            section[tabindex="0"] {
+                overflow-x: hidden;
+            }
+            /* Style des boutons de navigation */
+           .stButton>button {
+                width: 100%;
+                border-radius: 10px;
+                height: 3em;
+                background-color: #f0f2f6;
+            }
+            /* Rend le titre du calendrier plus lisible */
+           .fc-toolbar-title {
+                font-size: 1.2rem!important;
+                font-weight: bold;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-# --- 1. CSS "FORCE BRUTE" POUR UN LOOK MOBILE COMPACT ---
-st.markdown("""
-    <style>
-    /* On réduit les marges énormes de Streamlit en haut de page */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-left: 0.3rem !important;
-        padding-right: 0.3rem !important;
+    # 2. Gestion de l'état (Session State) pour la navigation 
+    if 'current_date' not in st.session_state:
+        st.session_state.current_date = datetime.now()
+
+    # Fonctions de navigation
+    def prev_week():
+        st.session_state.current_date -= timedelta(days=7)
+
+    def next_week():
+        st.session_state.current_date += timedelta(days=7)
+
+    def go_today():
+        st.session_state.current_date = datetime.now()
+
+    # 3. Interface de Navigation (Barre de contrôle compacte)
+    col1, col2, col3, col4 = st.columns([1, 1, 2, 1])
+    with col1:
+        st.button("⬅️", on_click=prev_week, help="Semaine précédente")
+    with col2:
+        st.button("🎯", on_click=go_today, help="Aujourd'hui")
+    with col4:
+        st.button("➡️", on_click=next_week, help="Semaine suivante")
+    with col3:
+        # Affiche le mois/année courant de manière élégante
+        st.markdown(f"<div style='text-align:center; padding-top:10px;'><b>{st.session_state.current_date.strftime('%B %Y')}</b></div>", unsafe_allow_html=True)
+
+    # 4. Configuration des données (Exemple d'événements)
+    # Dans votre projet, remplacez ceci par vos données de base de données [8, 9]
+    calendar_events =
+
+    # 5. Options du Calendrier optimisées pour "Zéro Scroll" [10, 2, 11]
+    calendar_options = {
+        "initialView": "timeGridWeek", # Vue hebdomadaire avec heures
+        "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
+        "headerToolbar": False, # On cache la toolbar native pour utiliser nos boutons propres
+        "allDaySlot": False, # Gain de place vertical
+        "slotMinTime": "07:00:00", # On commence à 7h pour éviter le vide de la nuit 
+        "slotMaxTime": "22:00:00", # On finit à 22h
+        "height": "auto", # S'adapte au contenu
+        "navLinks": True,
+        "selectable": True,
+        "firstDay": 1, # Commence la semaine le Lundi
+        "locale": 'fr', # Français
+        "slotDuration": "00:30:00",
+        "eventClick": "js:function(info) { alert('Event: ' + info.event.title); }",
     }
 
-    /* On force les colonnes à rester sur une SEULE ligne (pas d'empilement) */
-    [data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        overflow-x: auto !important; /* Défilement horizontal fluide */
-        flex-wrap: nowrap !important;
-        gap: 5px !important;
-    }
+    # 6. Rendu du composant [1, 12]
+    state = calendar(
+        events=calendar_events,
+        options=calendar_options,
+        custom_css="""
+           .fc-v-event { border-radius: 5px; border: none; padding: 2px; }
+           .fc-timegrid-slot { height: 3em!important; } /* Ajuste la hauteur des cases pour le tactile */
+        """,
+        key='family_calendar',
+    )
 
-    /* On définit une largeur fixe très étroite pour chaque colonne jour */
-    [data-testid="column"] {
-        min-width: 110px !important; /* Taille parfaite pour mobile */
-        flex: 0 0 auto !important;
-        padding: 0 !important;
-    }
+    # Gestion des interactions (clic sur événement ou date)
+    if state.get("callback") == "dateClick":
+        st.info(f"Date cliquée : {state['dateClick']['date']}")
+    if state.get("callback") == "eventClick":
+        st.success(f"Événement sélectionné : {state['eventClick']['event']['title']}")
 
-    /* RÉDUCTION DES TAILLES DE TEXTE SUR MOBILE */
-    @media (max-width: 768px) {
-        h1 { font-size: 1.2rem !important; margin-bottom: 0.5rem !important; }
-        h3 { font-size: 0.85rem !important; margin: 0 !important; } /* Dates (Lun 2, etc.) */
-        p, .stMarkdown { font-size: 0.75rem !important; }
-        
-        /* Boutons miniatures (Navigation et Suppression) */
-        .stButton button {
-            padding: 2px 4px !important;
-            height: 26px !important;
-            min-height: 26px !important;
-            font-size: 0.7rem !important;
-        }
-
-        /* On réduit l'espace interne des cadres d'événements */
-        [data-testid="stVerticalBlockBorderWrapper"] > div {
-            padding: 4px !important;
-            gap: 2px !important;
-        }
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("📅 Planning")
-
-# --- 2. NAVIGATION MINIATURE ---
-if "week_start" not in st.session_state:
-    st.session_state.week_start = date.today() - timedelta(days=date.today().weekday())
-
-# Ratios très serrés pour que tout tienne sur une ligne
-c1, c2, c3 = st.columns([0.4, 2, 0.4], vertical_alignment="center")
-with c1:
-    if st.button("⬅️", key="p"):
-        st.session_state.week_start -= timedelta(days=7); st.rerun()
-with c3:
-    if st.button("➡️", key="n"):
-        st.session_state.week_start += timedelta(days=7); st.rerun()
-with c2:
-    s, e = st.session_state.week_start, st.session_state.week_start + timedelta(days=6)
-    st.markdown(f"<p style='text-align:center; margin:0; font-weight:bold;'>{s.strftime('%d/%m')} au {e.strftime('%d/%m')}</p>", unsafe_allow_html=True)
-
-if st.button("Aujourd'hui", use_container_width=True):
-    st.session_state.week_start = date.today() - timedelta(days=date.today().weekday()); st.rerun()
-
-st.divider()
-
-# --- 3. LA GRILLE DE SEMAINE ---
-monday = st.session_state.week_start
-events = db.get_calendar(monday.isoformat(), (monday + timedelta(days=6)).isoformat())
-jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
-
-cols = st.columns(7)
-
-for i in range(7):
-    day = monday + timedelta(days=i)
-    with cols[i]:
-        # En-tête compact
-        is_today = day == date.today()
-        label = f"{jours_fr[i]} {day.day}"
-        if is_today:
-            st.markdown(f"### :red[{label}]")
-        else:
-            st.markdown(f"### {label}")
-        
-        day_events = [ev for ev in events if ev['event_date'] == day.isoformat()]
-        
-        for ev in day_events:
-            # On utilise une "carte" très serrée
-            with st.container(border=True):
-                # Titre en gras et petit
-                t = ev['event_name'].strip()
-                st.markdown(f"<div style='font-size:0.8rem; font-weight:bold; line-height:1;'>{t}</div>", unsafe_allow_html=True)
-                
-                # Heures et Membre en minuscule
-                st.markdown(f"<div style='font-size:0.65rem; color:gray;'>🕒 {ev['start_time'][:5]} | {ev['member']}</div>", unsafe_allow_html=True)
-                
-                # Bouton de suppression discret
-                if st.button("🗑️", key=f"d_{ev['calendar_id']}", use_container_width=True):
-                    db.remove_calendar(ev['calendar_id'])
-                    st.rerun()
+if __name__ == "__main__":
+    show_calendar()

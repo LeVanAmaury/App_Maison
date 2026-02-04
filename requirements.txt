@@ -1,4 +1,5 @@
 streamlit
+streamlit-calendar
 requests
 python-dotenv
 supabase
