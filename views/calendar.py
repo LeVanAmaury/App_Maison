@@ -3,6 +3,17 @@ from datetime import datetime, date, timedelta
 from src.database import get_db
 
 st.title("📅 Planning Familial")
+st.markdown("""
+    <style>
+    div[data-testid="stHorizontalBlock"] {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+    }
+    div[data-testid="column"] {
+        min-width: 150px; /* Taille minimum d'une case de jour sur mobile */
+    }
+    </style>
+""", unsafe_allow_html=True)
 db = get_db()
 
 # --- 1. GESTION DE LA NAVIGATION ---
