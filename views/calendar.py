@@ -3,99 +3,79 @@ from streamlit_calendar import calendar
 from datetime import datetime, timedelta
 from src.database import get_db
 
-# 1. Fenêtre pour ajouter un événement [1, 2]
+# 1. Fonction pour ajouter un événement (Fenêtre modale) 
 @st.dialog("Ajouter un événement")
 def add_event_dialog(selected_date=None):
     db = get_db()
-    try:
-        default_date = datetime.fromisoformat(selected_date.replace('Z', '')) if selected_date else datetime.now()
-    except:
-        default_date = datetime.now()
+    
+    # Pré-remplissage si une date a été cliquée
+    default_date = datetime.fromisoformat(selected_date) if selected_date else datetime.now()
     
     with st.form("form_add_event", clear_on_submit=True):
-        name = st.text_input("Nom de l'événement", placeholder="Ex: Dentiste, Foot...")
-        member = st.selectbox("Qui?", ["Papa", "Maman", "Enfants"])
+        name = st.text_input("Nom de l'événement", placeholder="Ex: Dentiste, Sport...")
+        member = st.session_state['user']
         date = st.date_input("Date", value=default_date)
         
-        c1, c2 = st.columns(2)
-        with c1: start = st.time_input("Début", value=default_date.time())
-        with c2: end = st.time_input("Fin", value=(default_date + timedelta(hours=1)).time())
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            start = st.time_input("Début", value=default_date.time())
+        with col_t2:
+            end = st.time_input("Fin", value=(default_date + timedelta(hours=1)).time())
             
         if st.form_submit_button("Enregistrer", use_container_width=True):
             if name:
                 db.add_calendar(name, str(date), str(start), str(end), member)
+                st.success("Ajouté!")
                 st.rerun()
+            else:
+                st.error("Le nom est obligatoire")
 
-# 2. Fenêtre pour supprimer [2]
-@st.dialog("Supprimer l'événement")
+# 2. Fonction pour supprimer un événement (Confirmation) [2]
+@st.dialog("Détails de l'événement")
 def event_details_dialog(event_info):
     db = get_db()
-    st.write(f"Supprimer l'événement : **{event_info['title']}**?")
-    if st.button("🗑️ Confirmer", variant="primary", use_container_width=True):
-        db.remove_calendar(event_info['id'])
-        st.rerun()
+    event_id = event_info['id']
+    title = event_info['title']
+    
+    st.write(f"Souhaitez-vous supprimer cet événement?")
+    st.info(f"**{title}**")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("❌ Supprimer", use_container_width=True):
+            db.remove_calendar(event_id)
+            st.rerun()
+    with col2:
+        if st.button("Annuler", use_container_width=True):
+            st.rerun()
 
 def show_calendar():
     db = get_db()
 
-    # --- CSS ULTRA-PRECIS POUR L'ALIGNEMENT --- [3, 4, 5]
+    # Style CSS optimisé [3, 4]
     st.markdown("""
         <style>
-            /* Force l'alignement horizontal strict pour la barre de navigation sur MOBILE */
-            div:has(button[key*="nav_"]) {
-                display: flex!important;
-                flex-direction: row!important;
-                flex-wrap: nowrap!important;
-                align-items: center!important;
-                justify-content: center!important;
-            }
-            
-            /* Style des boutons ronds de navigation */
-            div:has(button[key*="nav_"]) button {
-                border-radius: 50%!important;
-                width: 42px!important;
-                height: 42px!important;
-                padding: 0px!important;
-                line-height: 1!important;
-            }
-
-            /* Supprime les marges du titre pour un alignement vertical parfait sur PC */
-           .month-title {
-                margin: 0!important;
-                padding: 0!important;
-                text-align: center;
-                font-weight: bold;
-                font-size: 1.2rem;
-                min-width: 130px;
-            }
-
-            /* Nettoyage général mobile */
             [data-testid="block-container"] { padding-top: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
             section[tabindex="0"] { overflow-x: hidden; }
+           .stButton>button { border-radius: 12px; height: 3em; }
         </style>
     """, unsafe_allow_html=True)
 
+    # État de navigation
     if 'current_date' not in st.session_state:
         st.session_state.current_date = datetime.now()
 
     def change_week(delta):
         st.session_state.current_date += timedelta(days=delta)
 
-    # --- BARRE DE NAVIGATION ALIGNÉE (PC & MOBILE) ---
-    # L'option vertical_alignment="center" règle votre problème d'alignement vertical sur PC
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 3, 1], vertical_alignment="center")
-    
-    with nav_col1:
-        st.button("◀", on_click=change_week, args=(-7,), key="nav_prev")
-    
-    with nav_col2:
-        month_str = st.session_state.current_date.strftime('%b %Y')
-        st.markdown(f"<p class='month-title'>{month_str}</p>", unsafe_allow_html=True)
-    
-    with nav_col3:
-        st.button("▶", on_click=change_week, args=(7,), key="nav_next")
+    # Barre de navigation
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c1: st.button("⬅️", on_click=change_week, args=(-7,), use_container_width=True)
+    with c3: st.button("➡️", on_click=change_week, args=(7,), use_container_width=True)
+    with c2:
+        st.markdown(f"<h3 style='text-align: center; margin-top: 5px;'>{st.session_state.current_date.strftime('%b %Y')}</h3>", unsafe_allow_html=True)
 
-    # Données
+    # Récupération des données
     start_w = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
     end_w = start_w + timedelta(days=6)
     raw_events = db.get_calendar(start_w.strftime("%Y-%m-%d"), end_w.strftime("%Y-%m-%d"))
@@ -111,21 +91,21 @@ def show_calendar():
             "borderColor": "transparent"
         })
 
-    # Options Calendrier
+    # Options du calendrier [5, 6, 7]
     calendar_options = {
         "initialView": "timeGridWeek",
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
         "headerToolbar": False,
         "firstDay": 1,
-        "slotMinTime": "07:00:00",
-        "slotMaxTime": "22:30:00",
+        "slotMinTime": "06:00:00",
+        "slotMaxTime": "23:30:00",
         "allDaySlot": False,
         "locale": "fr",
         "height": "auto",
         "selectable": True,
-        "nowIndicator": True,
     }
 
+    # Affichage du calendrier
     state = calendar(
         events=formatted_events,
         options=calendar_options,
@@ -133,12 +113,16 @@ def show_calendar():
         key=f"cal_{st.session_state.current_date.strftime('%Y%W')}"
     )
 
+    # Bouton flottant (optionnel) ou gestion des clics
     st.button("➕ Ajouter un événement", on_click=add_event_dialog, use_container_width=True)
 
+    # Logique des interactions [8, 9]
     if state.get("callback") == "dateClick":
         add_event_dialog(state["dateClick"]["date"])
+    
     if state.get("callback") == "eventClick":
-        event_details_dialog(state["eventClick"]["event"])
+        event_info = state["eventClick"]["event"]
+        event_details_dialog(event_info)
 
 if __name__ == "__main__":
     show_calendar()
