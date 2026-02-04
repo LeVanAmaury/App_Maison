@@ -73,8 +73,7 @@ with c1:
         # On trie par ID décroissant pour avoir les derniers ajoutés en premier
         latest_shopping = sorted(shopping_data, key=lambda x: x['item_id'], reverse=True)[:5]
         for item in latest_shopping:
-            item_name = item['item'].strip()
-            st.write(f"• **{item['item']}** (dans *{item['list_category']}*)")
+            st.write(f"• **{item['item'].strip()}** (dans *{item['list_category']}*)")
     else:
         st.info("Aucun article à acheter.")
 
