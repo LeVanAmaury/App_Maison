@@ -24,13 +24,13 @@ with st.expander("Ajouter un événement"):
         
         member = st.selectbox("Pour qui ?", ["Amaury", "Thais", "Corentin", "Tous"])
         if st.form_submit_button("Enregistrer"):
-            db.add_event(name, e_date.isoformat(), t_start.isoformat(), t_end.isoformat(), member)
+            db.add_calendar(name, e_date.isoformat(), t_start.isoformat(), t_end.isoformat(), member)
             st.rerun()
 
 st.divider()
 
 # --- 3. AFFICHAGE DE LA GRILLE ---
-events = db.get_calendar_events(monday.isoformat(), sunday.isoformat())
+events = db.get_calendar(monday.isoformat(), sunday.isoformat())
 cols = st.columns(7)
 jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
@@ -48,5 +48,5 @@ for i in range(7):
                 st.caption(f"🕒 {ev['start_time'][:5]}")
                 st.write(f"👤 {ev['member']}")
                 if st.button("🗑️", key=f"del_{ev['calendar_id']}"):
-                    db.delete_event(ev['calendar_id'])
+                    db.remove_calendar(ev['calendar_id'])
                     st.rerun()

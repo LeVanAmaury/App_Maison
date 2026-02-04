@@ -125,7 +125,7 @@ class FamilyDB:
         """Ajoute un événement au calendrier."""
         self.supabase.table("family_calendar").insert({"event_name": name,"event_date": date,"start_time": start,"end_time": end,"member": member}).execute()
 
-    def remove_event(self, event_id):
+    def remove_calendar(self, event_id):
         self.supabase.table('family_calendar').delete().eq('calendar_id', event_id).execute()
         
 
