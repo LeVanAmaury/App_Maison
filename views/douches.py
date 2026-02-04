@@ -20,7 +20,7 @@ st.info(f"📅 Planning du : **{target_date.strftime('%d/%m/%Y')}**")
 data = db.get_showers(date_str)
 booked_slots = {d['slot_time']: d for d in data}
 
-slots = ["07:00", "07:15", "07:30", "07:45", "08:00", "08:15", "08:30"]
+slots = ['06:00','06:15','06:30','06:45','07:00','07:15','07:30','07:45','08:00','08:15','08:30']
 
 for slot in slots:
     col_time, col_action = st.columns([0.2, 0.8])
@@ -38,7 +38,7 @@ for slot in slots:
             
             if nom == st.session_state.get('user'):
                 if c_btn.button("🗑️", key=f"del_{slot}_{date_str}"):
-                    db.delete_shower_slot(res['id'])
+                    db.remove_shower(res['id'])
                     st.rerun()
         else:
             if st.button(f"Réserver {slot}", key=f"btn_{slot}_{date_str}", use_container_width=True):
