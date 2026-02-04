@@ -35,10 +35,10 @@ with st.expander("Ajouter un événement"):
             t_start = st.time_input("Début", value=datetime.strptime("18:00", "%H:%M").time())
             t_end = st.time_input("Fin", value=datetime.strptime("20:00", "%H:%M").time())
         
-        member = st.selectbox("Qui ?", ["Amaury", "Thais", "Corentin", "Tous"])
+        member = st.session_state['user']
         if st.form_submit_button("Ajouter au calendrier"):
             if name:
-                db.add_event(name, e_date.isoformat(), t_start.isoformat(), t_end.isoformat(), member)
+                db.add_calendar(name, e_date.isoformat(), t_start.isoformat(), t_end.isoformat(), member)
                 st.success("Événement ajouté !")
                 st.rerun()
 
