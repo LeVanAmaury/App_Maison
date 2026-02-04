@@ -5,79 +5,66 @@ from src.database import get_db
 st.set_page_config(layout="wide")
 db = get_db()
 
-# --- CSS "FORCE BRUTE" POUR RÉDUIRE LA TAILLE SUR MOBILE ---
+# --- CSS RADICAL POUR MOBILE (Fini le "Enorme") ---
 st.markdown("""
     <style>
-    /* 1. On réduit les marges du conteneur principal */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+    /* 1. On réduit la taille de TOUTE la page sur mobile */
+    @media (max-width: 768px) {
+        html, body, [data-testid="stAppViewContainer"] {
+            font-size: 12px !important;
+        }
+        /* On réduit les marges de l'application */
+        .block-container {
+            padding: 0.5rem 0.5rem !important;
+        }
+        /* On force les colonnes du calendrier à être très serrées */
+        div[data-testid="column"] {
+            min-width: 100px !important;
+            padding: 0px 2px !important;
+        }
+        /* On réduit la taille des boutons */
+        .stButton button {
+            padding: 0px 2px !important;
+            height: 24px !important;
+            min-height: 24px !important;
+            font-size: 11px !important;
+        }
+        /* On réduit les titres h3 (Lun 2, etc) */
+        h3 { font-size: 0.9rem !important; margin: 0 !important; padding: 0 !important; }
+        /* On réduit l'espace entre les éléments */
+        [data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
     }
-
-    /* 2. On force les colonnes à rester serrées */
+    
+    /* 2. Scroll horizontal pour voir la semaine */
     div[data-testid="stHorizontalBlock"] {
-        gap: 0.3rem !important;
         overflow-x: auto;
         flex-wrap: nowrap !important;
-    }
-
-    /* 3. TAILLES SPÉCIFIQUES MOBILE */
-    @media (max-width: 768px) {
-        /* On réduit la taille de base de TOUTE la page */
-        html { font-size: 13px; }
-        
-        /* On réduit la largeur minimum des jours pour en voir + */
-        div[data-testid="column"] { min-width: 110px !important; }
-        
-        /* On réduit drastiquement les boutons */
-        .stButton button {
-            padding: 0px 5px !important;
-            height: 28px !important;
-            min-height: 28px !important;
-            line-height: 1 !important;
-        }
-
-        /* On réduit les titres h3 (Lun 4...) */
-        h3 { font-size: 1rem !important; margin: 0 !important; }
-        
-        /* On réduit l'espace dans les cadres d'événements */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            padding: 0.3rem !important;
-            gap: 0.1rem !important;
-        }
-        
-        /* On cache les labels trop longs ou on les réduit */
-        .stCaption { font-size: 0.7rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("📅 Planning")
 
-# --- NAVIGATION ---
+# --- NAVIGATION ULTRA COMPACTE ---
 if "week_start" not in st.session_state:
     st.session_state.week_start = date.today() - timedelta(days=date.today().weekday())
 
-# On utilise des colonnes très serrées pour les flèches
-c_prev, c_center, c_next = st.columns([0.4, 2, 0.4], vertical_alignment="center")
-
-with c_prev:
-    if st.button("⬅️", key="prev"):
+# On utilise des ratios très serrés pour que les flèches collent au texte
+c1, c2, c3 = st.columns([0.3, 2, 0.3], vertical_alignment="center")
+with c1:
+    if st.button("⬅️", key="p"):
         st.session_state.week_start -= timedelta(days=7)
         st.rerun()
-
-with c_center:
-    start, end = st.session_state.week_start, st.session_state.week_start + timedelta(days=6)
-    st.markdown(f"<p style='text-align: center; font-size: 0.9rem; margin:0;'>{start.strftime('%d/%m')} - {end.strftime('%d/%m')}</p>", unsafe_allow_html=True)
+with c3:
+    if st.button("➡️", key="n"):
+        st.session_state.week_start += timedelta(days=7)
+        st.rerun()
+with c2:
+    s = st.session_state.week_start
+    e = s + timedelta(days=6)
+    st.markdown(f"<p style='text-align:center; margin:0; font-weight:bold;'>{s.strftime('%d/%m')} - {e.strftime('%d/%m')}</p>", unsafe_allow_html=True)
     if st.button("Aujourd'hui", use_container_width=True):
         st.session_state.week_start = date.today() - timedelta(days=date.today().weekday())
-        st.rerun()
-
-with c_next:
-    if st.button("➡️", key="next"):
-        st.session_state.week_start += timedelta(days=7)
         st.rerun()
 
 st.divider()
@@ -90,24 +77,29 @@ jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 cols = st.columns(7)
 
 for i in range(7):
-    current_day = monday + timedelta(days=i)
+    day = monday + timedelta(days=i)
     with cols[i]:
-        is_today = current_day == date.today()
-        # Titre de jour très compact
-        label = f"{jours_fr[i]} {current_day.day}"
+        # FIX : On retire le ":white" qui n'existe pas
+        is_today = day == date.today()
+        label = f"{jours_fr[i]} {day.day}"
         if is_today:
             st.markdown(f"**:red[{label}]**")
         else:
+            # Texte normal sans balise de couleur buggée
             st.markdown(f"**{label}**")
         
-        day_events = [e for e in events if e['event_date'] == current_day.isoformat()]
+        day_events = [ev for ev in events if ev['event_date'] == day.isoformat()]
         
         for ev in day_events:
             with st.container(border=True):
-                # Texte compacté avec .strip()
-                st.markdown(f"<div style='font-size:0.85rem; line-height:1.1; font-weight:bold;'>{ev['event_name'].strip()}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.75rem;'>🕒 {ev['start_time'][:5]}</div>", unsafe_allow_html=True)
+                # FIX : .strip() contre le bug des étoiles **
+                t = ev['event_name'].strip()
+                st.markdown(f"<div style='font-size:0.8rem; line-height:1; font-weight:bold;'>{t}</div>", unsafe_allow_html=True)
                 
-                if st.button("🗑️", key=f"del_{ev['calendar_id']}", use_container_width=True):
+                # Heures compactes
+                st.caption(f"{ev['start_time'][:5]}-{ev['end_time'][:5]} | {ev['member']}")
+                
+                # FIX KeyError : On utilise calendar_id comme dans ta base
+                if st.button("🗑️", key=f"d_{ev['calendar_id']}", use_container_width=True):
                     db.remove_calendar(ev['calendar_id'])
                     st.rerun()
