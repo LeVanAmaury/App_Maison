@@ -13,7 +13,7 @@ def add_event_dialog(selected_date=None):
     
     with st.form("form_add_event", clear_on_submit=True):
         name = st.text_input("Nom de l'événement", placeholder="Ex: Dentiste, Sport...")
-        member = st.selectbox("Qui?", ["Papa", "Maman", "Enfant 1", "Enfant 2"])
+        member = st.session_state['user']
         date = st.date_input("Date", value=default_date)
         
         col_t1, col_t2 = st.columns(2)
@@ -42,7 +42,7 @@ def event_details_dialog(event_info):
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("❌ Supprimer", variant="primary", use_container_width=True):
+        if st.button("❌ Supprimer", use_container_width=True):
             db.remove_calendar(event_id)
             st.rerun()
     with col2:
