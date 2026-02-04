@@ -47,14 +47,13 @@ for i in range(7):
     with cols[i]:
         is_today = current_day == datetime.now().date()
         title_color = "red" if is_today else "white"
-        st.markdown(f"### :{title_color}[{jours_fr[i]} {current_day.day}]")
-        
+        st.markdown(f"### :{title_color}[{jours_fr[i]} {current_day.day}]")        
         day_events = [e for e in events if e['event_date'] == current_day.isoformat()]
         
         for ev in day_events:
             with st.container(border=True):
                 st.markdown(f"**{ev['event_name']}**")
                 st.caption(f"🕒 {ev['start_time'][:5]} - {ev['member']}")
-                if st.button("🗑️", key=f"del_{ev['id']}"):
-                    db.remove_calendar(ev['id'])
+                if st.button("🗑️", key=f"del_{ev['calendar_id']}"):
+                    db.remove_calendar(ev['calendar_id'])
                     st.rerun()
