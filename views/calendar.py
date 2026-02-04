@@ -3,12 +3,12 @@ from streamlit_calendar import calendar
 from datetime import datetime, timedelta
 from src.database import get_db
 
-# 1. Fenêtre pour ajouter un événement (Modal) [13, 14]
+# 1. Fenêtre pour ajouter un événement (Modal) [10, 11]
 @st.dialog("Ajouter un événement")
 def add_event_dialog(selected_date=None):
     db = get_db()
-    # Gestion du format de date ISO de FullCalendar
     try:
+        # Nettoyage de la date ISO provenant du JS
         default_date = datetime.fromisoformat(selected_date.replace('Z', '')) if selected_date else datetime.now()
     except:
         default_date = datetime.now()
@@ -27,11 +27,11 @@ def add_event_dialog(selected_date=None):
                 db.add_calendar(name, str(date), str(start), str(end), member)
                 st.rerun()
 
-# 2. Fenêtre pour supprimer un événement [14]
-@st.dialog("Supprimer l'événement")
+# 2. Fenêtre pour supprimer un événement [11]
+@st.dialog("Détails de l'événement")
 def event_details_dialog(event_info):
     db = get_db()
-    st.warning(f"Supprimer : {event_info['title']}?")
+    st.write(f"Supprimer l'événement : **{event_info['title']}**?")
     if st.button("🗑️ Confirmer la suppression", variant="primary", use_container_width=True):
         db.remove_calendar(event_info['id'])
         st.rerun()
@@ -39,29 +39,46 @@ def event_details_dialog(event_info):
 def show_calendar():
     db = get_db()
 
-    # --- CSS HACK : FORCE LE LAYOUT HORIZONTAL SUR MOBILE --- [7, 8, 12]
+    # --- CSS CORRECTIF POUR NAVIGATION HORIZONTALE --- [1, 2, 9]
     st.markdown("""
         <style>
-            /* Force les colonnes à rester sur une seule ligne (Pas d'empilement mobile) */
+            /* FORCE LES COLONNES A RESTER SUR UNE LIGNE SUR MOBILE */
             {
                 display: flex!important;
                 flex-direction: row!important;
                 flex-wrap: nowrap!important;
                 align-items: center!important;
-                gap: 0.5rem!important;
+                justify-content: center!important;
             }
-            /* Style des boutons de navigation arrondis */
-            button {
+            
+            /* EMPECHE LES BOUTONS DE PRENDRE TOUTE LA LARGEUR */
+            [data-testid="column"] {
+                width: fit-content!important;
+                flex: unset!important;
+                min-width: unset!important;
+            }
+
+            /* STYLE DES BOUTONS RONDS */
+            button[kind="secondary"] {
                 border-radius: 50%!important;
                 width: 45px!important;
                 height: 45px!important;
                 padding: 0px!important;
-                margin: auto!important;
+                display: flex!important;
+                align-items: center!important;
+                justify-content: center!important;
             }
-            /* Supprime les marges de page pour mobile */
+
+            /* AJUSTEMENTS TITRE ET PAGE */
+           .month-label { 
+                text-align: center; 
+                font-weight: bold; 
+                font-size: 1.2rem; 
+                margin: 0 15px;
+                min-width: 120px;
+            }
             [data-testid="block-container"] { padding-top: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
             section[tabindex="0"] { overflow-x: hidden; }
-           .month-label { text-align: center; font-weight: bold; font-size: 1.1rem; margin: 0; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -71,15 +88,15 @@ def show_calendar():
     def change_week(delta):
         st.session_state.current_date += timedelta(days=delta)
 
-    # --- BARRE DE NAVIGATION (Garantie à 3 colonnes horizontales) ---
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 4, 1])
+    # --- BARRE DE NAVIGATION (Boutons à gauche et à droite) ---
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     with nav_col1:
-        st.button("◀", on_click=change_week, args=(-7,), key="btn_prev")
+        st.button("◀", on_click=change_week, args=(-7,), key="nav_prev")
     with nav_col2:
-        month_str = st.session_state.current_date.strftime('%B %Y')
+        month_str = st.session_state.current_date.strftime('%b %Y')
         st.markdown(f"<p class='month-label'>{month_str}</p>", unsafe_allow_html=True)
     with nav_col3:
-        st.button("▶", on_click=change_week, args=(7,), key="btn_next")
+        st.button("▶", on_click=change_week, args=(7,), key="nav_next")
 
     # Données de la semaine
     start_w = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
@@ -94,34 +111,34 @@ def show_calendar():
             "start": f"{ev.get('event_date')}T{ev.get('start_time')}",
             "end": f"{ev.get('event_date')}T{ev.get('end_time')}",
             "backgroundColor": "#3D9DF3" if ev.get('member') == "Papa" else "#FF6C6C",
+            "borderColor": "transparent"
         })
 
-    # Options Calendrier
+    # Configuration Calendrier [7, 8]
     calendar_options = {
         "initialView": "timeGridWeek",
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
         "headerToolbar": False,
         "firstDay": 1,
-        "slotMinTime": "06:00:00", # Moins de scroll en cachant la nuit
-        "slotMaxTime": "23:30:00",
+        "slotMinTime": "07:00:00",
+        "slotMaxTime": "22:30:00",
         "allDaySlot": False,
         "locale": "fr",
         "height": "auto",
         "selectable": True,
     }
 
-    # Affichage du calendrier
     state = calendar(
         events=formatted_events,
         options=calendar_options,
-        custom_css=".fc-timegrid-slot { height: 2.8em!important; }",
+        custom_css=".fc-event { border-radius: 6px; padding: 2px; }",
         key=f"cal_{st.session_state.current_date.strftime('%Y%W')}"
     )
 
-    # Bouton d'ajout flottant
+    # Bouton d'ajout rapide
     st.button("➕ Ajouter un événement", on_click=add_event_dialog, use_container_width=True)
 
-    # Logique de clic
+    # Interactions [12, 11]
     if state.get("callback") == "dateClick":
         add_event_dialog(state["dateClick"]["date"])
     if state.get("callback") == "eventClick":
