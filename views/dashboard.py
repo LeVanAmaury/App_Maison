@@ -55,8 +55,8 @@ if notes:
                 if col_button_suppr.button("🗑️", key=f"note_{n_id}"):
                     db.delete_note(n_id)
                     st.rerun()
-                if col_read_by:
-                    st.caption(','.join(map(str,n_read_by)))
+                if n_read_by:
+                    col_read_by.caption(f"Lu par {','.join(map(str,n_read_by))}")
 else:
     st.info("Le mur est vide.")
 
