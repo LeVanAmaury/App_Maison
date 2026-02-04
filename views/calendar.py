@@ -1,101 +1,104 @@
 import streamlit as st
 from streamlit_calendar import calendar
 from datetime import datetime, timedelta
+from src.database import get_db
 
 def show_calendar():
-    # 1. Configuration de la page et style CSS pour Mobile
-    # On injecte du CSS pour maximiser l'espace et éviter le "glissement" latéral sur mobile [4, 3, 5]
+    # 1. Initialisation de la base de données
+    db = get_db()
+
+    # 2. Injection CSS pour l'ergonomie Mobile (Zéro scroll horizontal + compacité) [1, 2]
     st.markdown("""
         <style>
-            /* Supprime les marges excessives en haut de page */
+            /* Supprime les marges inutiles pour gagner de l'espace sur petit écran */
             [data-testid="block-container"] {
                 padding-top: 1rem;
-                padding-bottom: 1rem;
+                padding-bottom: 0rem;
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
             }
-            /* Empêche le scroll horizontal parasite sur smartphone */
+            /* Bloque le glissement latéral sur iPhone/Android */
             section[tabindex="0"] {
                 overflow-x: hidden;
             }
-            /* Style des boutons de navigation */
            .stButton>button {
-                width: 100%;
-                border-radius: 10px;
+                border-radius: 8px;
                 height: 3em;
-                background-color: #f0f2f6;
-            }
-            /* Rend le titre du calendrier plus lisible */
-           .fc-toolbar-title {
-                font-size: 1.2rem!important;
-                font-weight: bold;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. Gestion de l'état (Session State) pour la navigation 
+    # 3. Gestion de la navigation par Semaine 
     if 'current_date' not in st.session_state:
         st.session_state.current_date = datetime.now()
 
-    # Fonctions de navigation
-    def prev_week():
-        st.session_state.current_date -= timedelta(days=7)
+    def change_week(delta_days):
+        st.session_state.current_date += timedelta(days=delta_days)
 
-    def next_week():
-        st.session_state.current_date += timedelta(days=7)
+    # Calcul de la plage de dates pour la requête Supabase
+    start_of_week = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
 
-    def go_today():
-        st.session_state.current_date = datetime.now()
-
-    # 3. Interface de Navigation (Barre de contrôle compacte)
-    col1, col2, col3, col4 = st.columns([1, 1, 2, 1])
+    # 4. Barre de Navigation (Haut de page)
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
-        st.button("⬅️", on_click=prev_week, help="Semaine précédente")
-    with col2:
-        st.button("🎯", on_click=go_today, help="Aujourd'hui")
-    with col4:
-        st.button("➡️", on_click=next_week, help="Semaine suivante")
+        st.button("⬅️", on_click=change_week, args=(-7,), use_container_width=True)
     with col3:
-        # Affiche le mois/année courant de manière élégante
-        st.markdown(f"<div style='text-align:center; padding-top:10px;'><b>{st.session_state.current_date.strftime('%B %Y')}</b></div>", unsafe_allow_html=True)
+        st.button("➡️", on_click=change_week, args=(7,), use_container_width=True)
+    with col2:
+        month_label = st.session_state.current_date.strftime("%B %Y")
+        st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>{month_label}</h3>", unsafe_allow_html=True)
 
-    # 4. Configuration des données (Exemple d'événements)
-    # Dans votre projet, remplacez ceci par vos données de base de données [8, 9]
-    calendar_events =
+    # 5. Récupération et formatage des données Supabase [3, 4]
+    # On récupère les événements entre le lundi et le dimanche de la semaine sélectionnée
+    raw_events = db.get_calendar(start_of_week.strftime("%Y-%m-%d"), end_of_week.strftime("%Y-%m-%d"))
+    
+    formatted_events = []
+    for ev in raw_events:
+        # Transformation pour FullCalendar : il faut des clés 'title', 'start' et 'end'
+        formatted_events.append({
+            "id": ev.get("calendar_id"),
+            "title": f"{ev.get('event_name')} ({ev.get('member')})",
+            "start": f"{ev.get('event_date')}T{ev.get('start_time')}",
+            "end": f"{ev.get('event_date')}T{ev.get('end_time')}",
+            "backgroundColor": "#3D9DF3" if ev.get('member') == "Papa" else "#FF6C6C",
+        })
 
-    # 5. Options du Calendrier optimisées pour "Zéro Scroll" [10, 2, 11]
+    # 6. Options du Calendrier optimisées pour Mobile [3, 5, 6]
     calendar_options = {
-        "initialView": "timeGridWeek", # Vue hebdomadaire avec heures
+        "initialView": "timeGridWeek", # Vue 1 semaine avec les heures
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
-        "headerToolbar": False, # On cache la toolbar native pour utiliser nos boutons propres
-        "allDaySlot": False, # Gain de place vertical
-        "slotMinTime": "07:00:00", # On commence à 7h pour éviter le vide de la nuit 
-        "slotMaxTime": "22:00:00", # On finit à 22h
-        "height": "auto", # S'adapte au contenu
-        "navLinks": True,
+        "headerToolbar": False, # On utilise nos propres boutons Streamlit pour plus de propreté
+        "firstDay": 1, # La semaine commence le lundi
+        "slotMinTime": "07:30:00", # Réduit la hauteur en masquant la nuit (Moins de scroll!)
+        "slotMaxTime": "21:30:00",
+        "allDaySlot": False,
+        "locale": "fr",
+        "height": "auto", # Le calendrier s'adapte à l'écran sans créer de double barre de défilement
+        "nowIndicator": True,
+        "editable": True,
         "selectable": True,
-        "firstDay": 1, # Commence la semaine le Lundi
-        "locale": 'fr', # Français
-        "slotDuration": "00:30:00",
-        "eventClick": "js:function(info) { alert('Event: ' + info.event.title); }",
     }
 
-    # 6. Rendu du composant [1, 12]
-    state = calendar(
-        events=calendar_events,
+    # 7. Rendu du composant
+    # Le 'key' change selon la date pour forcer le rafraîchissement visuel lors de la navigation
+    calendar_key = f"calendar_{st.session_state.current_date.strftime('%Y%W')}"
+    
+    cal_data = calendar(
+        events=formatted_events,
         options=calendar_options,
         custom_css="""
-           .fc-v-event { border-radius: 5px; border: none; padding: 2px; }
-           .fc-timegrid-slot { height: 3em!important; } /* Ajuste la hauteur des cases pour le tactile */
+           .fc-event-title { font-weight: 600; font-size: 0.85rem; }
+           .fc-timegrid-slot { height: 2.5em!important; } /* Case plus grande pour le tactile */
         """,
-        key='family_calendar',
+        key=calendar_key
     )
 
-    # Gestion des interactions (clic sur événement ou date)
-    if state.get("callback") == "dateClick":
-        st.info(f"Date cliquée : {state['dateClick']['date']}")
-    if state.get("callback") == "eventClick":
-        st.success(f"Événement sélectionné : {state['eventClick']['event']['title']}")
+    # Interaction : si l'utilisateur clique sur un créneau vide
+    if cal_data.get("callback") == "dateClick":
+        st.session_state.selected_slot = cal_data["dateClick"]["date"]
+        st.toast(f"Créneau sélectionné : {st.session_state.selected_slot}")
 
+# Exécution directe si le fichier est appelé
 if __name__ == "__main__":
     show_calendar()
