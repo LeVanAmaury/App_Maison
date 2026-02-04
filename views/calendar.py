@@ -6,12 +6,18 @@ st.set_page_config(layout="wide")
 st.title("📅 Planning Familial")
 db = get_db()
 
-# --- CSS POUR LE LOOK "CALENDRIER" ---
+# --- CSS POUR LE SCROLL HORIZONTAL (Look "Application") ---
 st.markdown("""
     <style>
-    div[data-testid="stHorizontalBlock"] { overflow-x: auto; flex-wrap: nowrap !important; }
-    div[data-testid="column"] { min-width: 180px; } /* Ajuste la largeur des colonnes */
-    .event-card { border-left: 5px solid #ff4b4b; padding-left: 10px; margin-bottom: 10px; }
+    div[data-testid="stHorizontalBlock"] {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        gap: 10px;
+        padding-bottom: 15px;
+    }
+    div[data-testid="column"] {
+        min-width: 250px; /* Taille d'une case de jour sur mobile */
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -19,45 +25,70 @@ st.markdown("""
 if "week_start" not in st.session_state:
     st.session_state.week_start = date.today() - timedelta(days=date.today().weekday())
 
-c_prev, c_center, c_next = st.columns([1, 2, 1])
-with c_prev:
-    if st.button("⬅️"): st.session_state.week_start -= timedelta(days=7); st.rerun()
-with c_next:
-    if st.button("➡️"): st.session_state.week_start += timedelta(days=7); st.rerun()
-with c_center:
-    start, end = st.session_state.week_start, st.session_state.week_start + timedelta(days=6)
-    st.markdown(f"<p style='text-align:center'>Semaine du {start.strftime('%d/%m')} au {end.strftime('%d/%m')}</p>", unsafe_allow_html=True)
+col_prev, col_center, col_next = st.columns([1, 2, 1])
+with col_prev:
+    if st.button("⬅️"): 
+        st.session_state.week_start -= timedelta(days=7)
+        st.rerun()
+with col_next:
+    if st.button("➡️"): 
+        st.session_state.week_start += timedelta(days=7)
+        st.rerun()
+with col_center:
+    start = st.session_state.week_start
+    end = start + timedelta(days=6)
+    st.markdown(f"<p style='text-align: center; font-weight: bold;'>Semaine du {start.strftime('%d/%m')} au {end.strftime('%d/%m')}</p>", unsafe_allow_html=True)
+
+# --- FORMULAIRE D'AJOUT ---
+with st.expander("Ajouter un événement"):
+    with st.form("add_event_form", clear_on_submit=True):
+        name = st.text_input("Quoi ?", placeholder="Ex: Concert de Rock")
+        e_date = st.date_input("Le jour", value=date.today())
+        c1, c2 = st.columns(2)
+        with c1: t_start = st.time_input("Début", value=datetime.strptime("18:00", "%H:%M").time())
+        with c2: t_end = st.time_input("Fin", value=datetime.strptime("20:00", "%H:%M").time())
+        
+        member = st.session_state.get('user', 'Anonyme')
+        if st.form_submit_button("Ajouter", use_container_width=True):
+            if name:
+                db.add_calendar(name.strip(), e_date.isoformat(), t_start.isoformat(), t_end.isoformat(), member)
+                st.rerun()
+
+st.divider()
 
 # --- AFFICHAGE DE LA SEMAINE ---
 monday = st.session_state.week_start
 events = db.get_calendar(monday.isoformat(), (monday + timedelta(days=6)).isoformat())
 jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
-# On définit des couleurs pour la vision immédiate
-colors = {"Amaury": "#3498db", "Thais": "#9b59b6", "Corentin": "#2ecc71", "Tous": "#e67e22"}
-
+# On crée les 7 colonnes qui défileront horizontalement sur mobile
 cols = st.columns(7)
 
 for i in range(7):
     current_day = monday + timedelta(days=i)
     with cols[i]:
-        # En-tête compact
-        color = "red" if current_day == date.today() else "white"
-        st.markdown(f"**:{color}[{jours_fr[i]} {current_day.day}]**")
+        # En-tête du jour (Fix du :white)
+        is_today = current_day == date.today()
+        if is_today:
+            st.markdown(f"### :red[{jours_fr[i]} {current_day.day}]")
+            st.caption("🔴 Aujourd'hui")
+        else:
+            st.markdown(f"### {jours_fr[i]} {current_day.day}")
         
         day_events = [e for e in events if e['event_date'] == current_day.isoformat()]
         
         for ev in day_events:
-            # On récupère la couleur du membre
-            m_color = colors.get(ev['member'], "#7f8c8d")
-            
-            # Création d'une "carte" visuelle compacte
             with st.container(border=True):
-                st.markdown(f"<div style='border-left: 4px solid {m_color}; padding-left:5px'>"
-                            f"<b>{ev['event_name'].strip()}</b><br>"
-                            f"<small>🕒 {ev['start_time'][:5]}</small></div>", unsafe_allow_html=True)
+                # .strip() pour éviter le bug des étoiles **
+                titre = ev['event_name'].strip()
+                st.markdown(f"**{titre}**")
                 
-                # Petit bouton de suppression discret
+                debut = ev['start_time'][:5]
+                fin = ev['end_time'][:5]
+                st.caption(f"🕒 {debut} - {fin}")
+                st.caption(f"👤 {ev['member']}")
+                
+                # Correction du KeyError : On utilise 'calendar_id'
                 if st.button("🗑️", key=f"del_{ev['calendar_id']}"):
                     db.remove_calendar(ev['calendar_id'])
                     st.rerun()
