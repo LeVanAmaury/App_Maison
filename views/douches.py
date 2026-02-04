@@ -5,15 +5,13 @@ from src.database import get_db
 st.title("🚿 Planning de Douches")
 db = get_db()
 
-tabs = st.tabs(["Aujourd'hui", 'Demain'])
+choix = st.radio("Pour quel jour ?", ["Aujourd'hui", "Demain"], horizontal=True)
 
-with tabs[0]:
+if choix == "Aujourd'hui":
     target_date = date.today()
-
-with tabs[1]:
+else:
     target_date = date.today() + timedelta(days=1)
 
-# --- SECTION AJOUT DE TÂCHE ---
 date_str = target_date.isoformat()
 st.info(f"📅 Planning du : **{target_date.strftime('%d/%m/%Y')}**")
 
@@ -38,10 +36,10 @@ for slot in slots:
             
             if nom == st.session_state.get('user'):
                 if c_btn.button("🗑️", key=f"del_{slot}_{date_str}"):
-                    db.remove_shower(res['douche_id'])
+                    db.remove_shower(res['douche_id']) 
                     st.rerun()
         else:
             if st.button(f"Réserver {slot}", key=f"btn_{slot}_{date_str}", use_container_width=True):
                 user = st.session_state.get('user', 'Anonyme')
-                db.add_shower_slot(slot, user, date_str)
+                db.add_shower_slot(slot, user, date_str) 
                 st.rerun()
