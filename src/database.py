@@ -89,7 +89,7 @@ class FamilyDB:
         # Vérifie si ta colonne s'appelle item_id ou menu_id dans Supabase
         self.supabase.table("weekly_menu").delete().eq("item_id", item_id).execute()
 
-    # --- AMÉLIORATIONS / UPGRADES (Rétabli) ---
+    # --- AMÉLIORATIONS / UPGRADES ---
     def add_upgrade(self, upgrade_name):
         self.supabase.table("upgrades").insert({"upgrade_name": upgrade_name}).execute()
 
@@ -99,6 +99,21 @@ class FamilyDB:
     def get_upgrades(self):
         res = self.supabase.table("upgrades").select("*").execute()
         return [(i['upgrade_id'], i['upgrade_name']) for i in res.data]
+    
+    # -- Planing de douches ---
+    def get_showers(self, target_date):
+        res = self.supabase.table('douches').select('*').eq('date', target_date).execute()
+        return res.data
+    
+    def add_shower_slot(self, slot_time, user_name, target_date):
+        self.supabase.table('douches').insert({
+            'slot_time': slot_time,
+            'user_name': user_name,
+            'date': target_date
+        }).execute()
+
+    def remove_shower(self,shower_id):
+        self.supabase.table('douches').delete().eq('douche_id', shower_id).execute()
 
 @st.cache_resource
 def get_db():
