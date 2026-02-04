@@ -21,7 +21,7 @@ with col_prev:
 with col_center:
     start = st.session_state.week_start
     end = start + timedelta(days=6)
-    st.markdown(f"<h3 style='text-align: center;'>Du {start.strftime('%d/%m')} au {end.strftime('%d/%m')}</h3>", unsafe_all_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>Du {start.strftime('%d/%m')} au {end.strftime('%d/%m')}</h3>", unsafe_allow_html=True)
     if st.button("Aujourd'hui", use_container_width=True):
         today = datetime.now().date()
         st.session_state.week_start = today - timedelta(days=today.weekday())
