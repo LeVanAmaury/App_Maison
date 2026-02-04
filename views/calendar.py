@@ -3,12 +3,11 @@ from streamlit_calendar import calendar
 from datetime import datetime, timedelta
 from src.database import get_db
 
-# 1. Fenêtre pour ajouter un événement (Modal) [10, 11]
+# 1. Fenêtre pour ajouter un événement [1, 2]
 @st.dialog("Ajouter un événement")
 def add_event_dialog(selected_date=None):
     db = get_db()
     try:
-        # Nettoyage de la date ISO provenant du JS
         default_date = datetime.fromisoformat(selected_date.replace('Z', '')) if selected_date else datetime.now()
     except:
         default_date = datetime.now()
@@ -27,23 +26,23 @@ def add_event_dialog(selected_date=None):
                 db.add_calendar(name, str(date), str(start), str(end), member)
                 st.rerun()
 
-# 2. Fenêtre pour supprimer un événement [11]
-@st.dialog("Détails de l'événement")
+# 2. Fenêtre pour supprimer [2]
+@st.dialog("Supprimer l'événement")
 def event_details_dialog(event_info):
     db = get_db()
     st.write(f"Supprimer l'événement : **{event_info['title']}**?")
-    if st.button("🗑️ Confirmer la suppression", variant="primary", use_container_width=True):
+    if st.button("🗑️ Confirmer", variant="primary", use_container_width=True):
         db.remove_calendar(event_info['id'])
         st.rerun()
 
 def show_calendar():
     db = get_db()
 
-    # --- CSS CORRECTIF POUR NAVIGATION HORIZONTALE --- [1, 2, 9]
+    # --- CSS ULTRA-PRECIS POUR L'ALIGNEMENT --- [3, 4, 5]
     st.markdown("""
         <style>
-            /* FORCE LES COLONNES A RESTER SUR UNE LIGNE SUR MOBILE */
-            {
+            /* Force l'alignement horizontal strict pour la barre de navigation sur MOBILE */
+            div:has(button[key*="nav_"]) {
                 display: flex!important;
                 flex-direction: row!important;
                 flex-wrap: nowrap!important;
@@ -51,32 +50,26 @@ def show_calendar():
                 justify-content: center!important;
             }
             
-            /* EMPECHE LES BOUTONS DE PRENDRE TOUTE LA LARGEUR */
-            [data-testid="column"] {
-                width: fit-content!important;
-                flex: unset!important;
-                min-width: unset!important;
-            }
-
-            /* STYLE DES BOUTONS RONDS */
-            button[kind="secondary"] {
+            /* Style des boutons ronds de navigation */
+            div:has(button[key*="nav_"]) button {
                 border-radius: 50%!important;
-                width: 45px!important;
-                height: 45px!important;
+                width: 42px!important;
+                height: 42px!important;
                 padding: 0px!important;
-                display: flex!important;
-                align-items: center!important;
-                justify-content: center!important;
+                line-height: 1!important;
             }
 
-            /* AJUSTEMENTS TITRE ET PAGE */
-           .month-label { 
-                text-align: center; 
-                font-weight: bold; 
-                font-size: 1.2rem; 
-                margin: 0 15px;
-                min-width: 120px;
+            /* Supprime les marges du titre pour un alignement vertical parfait sur PC */
+           .month-title {
+                margin: 0!important;
+                padding: 0!important;
+                text-align: center;
+                font-weight: bold;
+                font-size: 1.2rem;
+                min-width: 130px;
             }
+
+            /* Nettoyage général mobile */
             [data-testid="block-container"] { padding-top: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
             section[tabindex="0"] { overflow-x: hidden; }
         </style>
@@ -88,17 +81,21 @@ def show_calendar():
     def change_week(delta):
         st.session_state.current_date += timedelta(days=delta)
 
-    # --- BARRE DE NAVIGATION (Boutons à gauche et à droite) ---
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+    # --- BARRE DE NAVIGATION ALIGNÉE (PC & MOBILE) ---
+    # L'option vertical_alignment="center" règle votre problème d'alignement vertical sur PC
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 3, 1], vertical_alignment="center")
+    
     with nav_col1:
         st.button("◀", on_click=change_week, args=(-7,), key="nav_prev")
+    
     with nav_col2:
         month_str = st.session_state.current_date.strftime('%b %Y')
-        st.markdown(f"<p class='month-label'>{month_str}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='month-title'>{month_str}</p>", unsafe_allow_html=True)
+    
     with nav_col3:
         st.button("▶", on_click=change_week, args=(7,), key="nav_next")
 
-    # Données de la semaine
+    # Données
     start_w = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
     end_w = start_w + timedelta(days=6)
     raw_events = db.get_calendar(start_w.strftime("%Y-%m-%d"), end_w.strftime("%Y-%m-%d"))
@@ -114,7 +111,7 @@ def show_calendar():
             "borderColor": "transparent"
         })
 
-    # Configuration Calendrier [7, 8]
+    # Options Calendrier
     calendar_options = {
         "initialView": "timeGridWeek",
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
@@ -126,6 +123,7 @@ def show_calendar():
         "locale": "fr",
         "height": "auto",
         "selectable": True,
+        "nowIndicator": True,
     }
 
     state = calendar(
@@ -135,10 +133,8 @@ def show_calendar():
         key=f"cal_{st.session_state.current_date.strftime('%Y%W')}"
     )
 
-    # Bouton d'ajout rapide
     st.button("➕ Ajouter un événement", on_click=add_event_dialog, use_container_width=True)
 
-    # Interactions [12, 11]
     if state.get("callback") == "dateClick":
         add_event_dialog(state["dateClick"]["date"])
     if state.get("callback") == "eventClick":
