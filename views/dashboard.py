@@ -73,7 +73,7 @@ with c1:
         # On trie par ID décroissant pour avoir les derniers ajoutés en premier
         latest_shopping = sorted(shopping_data, key=lambda x: x['item_id'], reverse=True)[:5]
         for item in latest_shopping:
-            # On affiche l'article ET sa catégorie
+            item_name = item['item'].strip()
             st.write(f"• **{item['item']}** (dans *{item['list_category']}*)")
     else:
         st.info("Aucun article à acheter.")
@@ -87,6 +87,6 @@ with c2:
         latest_tasks = sorted(tasks_data, key=lambda x: x[0], reverse=True)[:5]
         for t_id, t_title, t_assignee, t_done, t_creator in latest_tasks:
             status = "✅" if t_done else "⏳"
-            st.write(f"{status} **{t_title}** → {','.join(map(str,t_assignee))}")
+            st.write(f"{status} **{t_title.strip()}** → {','.join(map(str,t_assignee))}")
     else:
         st.info("Toutes les corvées sont finies !")
