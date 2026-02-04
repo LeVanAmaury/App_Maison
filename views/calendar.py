@@ -67,7 +67,7 @@ for i in range(7):
                 st.markdown(f"**{titre}**")
                 debut = ev['start_time'][:5]
                 fin = ev['end_time'][:5]
-                st.caption(f"🕒 {debut} — {fin} —{ev['member']}")
+                st.caption(f"🕒 {debut} — {fin} — {ev['member']}")
                 if st.button("🗑️", key=f"del_{ev['calendar_id']}"):
                     db.remove_calendar(ev['calendar_id'])
                     st.rerun()
