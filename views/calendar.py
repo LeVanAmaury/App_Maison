@@ -38,7 +38,7 @@ st.divider()
 monday = st.session_state.week_start
 sunday = monday + timedelta(days=6)
 
-events = db.get_calendar_events(monday.isoformat(), sunday.isoformat())
+events = db.get_calendar(monday.isoformat(), sunday.isoformat())
 cols = st.columns(7)
 jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
@@ -56,5 +56,5 @@ for i in range(7):
                 st.markdown(f"**{ev['event_name']}**")
                 st.caption(f"🕒 {ev['start_time'][:5]} - {ev['member']}")
                 if st.button("🗑️", key=f"del_{ev['id']}"):
-                    db.delete_event(ev['id'])
+                    db.remove_calendar(ev['id'])
                     st.rerun()
