@@ -3,102 +3,126 @@ from streamlit_calendar import calendar
 from datetime import datetime, timedelta
 from src.database import get_db
 
+# 1. Fonction pour ajouter un événement (Fenêtre modale) 
+@st.dialog("Ajouter un événement")
+def add_event_dialog(selected_date=None):
+    db = get_db()
+    
+    # Pré-remplissage si une date a été cliquée
+    default_date = datetime.fromisoformat(selected_date) if selected_date else datetime.now()
+    
+    with st.form("form_add_event", clear_on_submit=True):
+        name = st.text_input("Nom de l'événement", placeholder="Ex: Dentiste, Sport...")
+        member = st.selectbox("Qui?", ["Papa", "Maman", "Enfant 1", "Enfant 2"])
+        date = st.date_input("Date", value=default_date)
+        
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            start = st.time_input("Début", value=default_date.time())
+        with col_t2:
+            end = st.time_input("Fin", value=(default_date + timedelta(hours=1)).time())
+            
+        if st.form_submit_button("Enregistrer", use_container_width=True):
+            if name:
+                db.add_calendar(name, str(date), str(start), str(end), member)
+                st.success("Ajouté!")
+                st.rerun()
+            else:
+                st.error("Le nom est obligatoire")
+
+# 2. Fonction pour supprimer un événement (Confirmation) [2]
+@st.dialog("Détails de l'événement")
+def event_details_dialog(event_info):
+    db = get_db()
+    event_id = event_info['id']
+    title = event_info['title']
+    
+    st.write(f"Souhaitez-vous supprimer cet événement?")
+    st.info(f"**{title}**")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("❌ Supprimer", variant="primary", use_container_width=True):
+            db.remove_calendar(event_id)
+            st.rerun()
+    with col2:
+        if st.button("Annuler", use_container_width=True):
+            st.rerun()
+
 def show_calendar():
-    # 1. Initialisation de la base de données
     db = get_db()
 
-    # 2. Injection CSS pour l'ergonomie Mobile (Zéro scroll horizontal + compacité) [1, 2]
+    # Style CSS optimisé [3, 4]
     st.markdown("""
         <style>
-            /* Supprime les marges inutiles pour gagner de l'espace sur petit écran */
-            [data-testid="block-container"] {
-                padding-top: 1rem;
-                padding-bottom: 0rem;
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            /* Bloque le glissement latéral sur iPhone/Android */
-            section[tabindex="0"] {
-                overflow-x: hidden;
-            }
-           .stButton>button {
-                border-radius: 8px;
-                height: 3em;
-            }
+            [data-testid="block-container"] { padding-top: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+            section[tabindex="0"] { overflow-x: hidden; }
+           .stButton>button { border-radius: 12px; height: 3em; }
         </style>
     """, unsafe_allow_html=True)
 
-    # 3. Gestion de la navigation par Semaine 
+    # État de navigation
     if 'current_date' not in st.session_state:
         st.session_state.current_date = datetime.now()
 
-    def change_week(delta_days):
-        st.session_state.current_date += timedelta(days=delta_days)
+    def change_week(delta):
+        st.session_state.current_date += timedelta(days=delta)
 
-    # Calcul de la plage de dates pour la requête Supabase
-    start_of_week = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
-    end_of_week = start_of_week + timedelta(days=6)
+    # Barre de navigation
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c1: st.button("⬅️", on_click=change_week, args=(-7,), use_container_width=True)
+    with c3: st.button("➡️", on_click=change_week, args=(7,), use_container_width=True)
+    with c2:
+        st.markdown(f"<h3 style='text-align: center; margin-top: 5px;'>{st.session_state.current_date.strftime('%b %Y')}</h3>", unsafe_allow_html=True)
 
-    # 4. Barre de Navigation (Haut de page)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        st.button("⬅️", on_click=change_week, args=(-7,), use_container_width=True)
-    with col3:
-        st.button("➡️", on_click=change_week, args=(7,), use_container_width=True)
-    with col2:
-        month_label = st.session_state.current_date.strftime("%B %Y")
-        st.markdown(f"<h3 style='text-align: center; margin-top: 0;'>{month_label}</h3>", unsafe_allow_html=True)
-
-    # 5. Récupération et formatage des données Supabase [3, 4]
-    # On récupère les événements entre le lundi et le dimanche de la semaine sélectionnée
-    raw_events = db.get_calendar(start_of_week.strftime("%Y-%m-%d"), end_of_week.strftime("%Y-%m-%d"))
+    # Récupération des données
+    start_w = st.session_state.current_date - timedelta(days=st.session_state.current_date.weekday())
+    end_w = start_w + timedelta(days=6)
+    raw_events = db.get_calendar(start_w.strftime("%Y-%m-%d"), end_w.strftime("%Y-%m-%d"))
     
-    formatted_events = []
+    formatted_events =
     for ev in raw_events:
-        # Transformation pour FullCalendar : il faut des clés 'title', 'start' et 'end'
         formatted_events.append({
             "id": ev.get("calendar_id"),
             "title": f"{ev.get('event_name')} ({ev.get('member')})",
             "start": f"{ev.get('event_date')}T{ev.get('start_time')}",
             "end": f"{ev.get('event_date')}T{ev.get('end_time')}",
             "backgroundColor": "#3D9DF3" if ev.get('member') == "Papa" else "#FF6C6C",
+            "borderColor": "transparent"
         })
 
-    # 6. Options du Calendrier optimisées pour Mobile [3, 5, 6]
+    # Options du calendrier [5, 6, 7]
     calendar_options = {
-        "initialView": "timeGridWeek", # Vue 1 semaine avec les heures
+        "initialView": "timeGridWeek",
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
-        "headerToolbar": False, # On utilise nos propres boutons Streamlit pour plus de propreté
-        "firstDay": 1, # La semaine commence le lundi
-        "slotMinTime": "06:30:00", # Réduit la hauteur en masquant la nuit (Moins de scroll!)
-        "slotMaxTime": "23:30:00",
+        "headerToolbar": False,
+        "firstDay": 1,
+        "slotMinTime": "07:00:00",
+        "slotMaxTime": "22:30:00",
         "allDaySlot": False,
         "locale": "fr",
-        "height": "auto", # Le calendrier s'adapte à l'écran sans créer de double barre de défilement
-        "nowIndicator": True,
-        "editable": True,
+        "height": "auto",
         "selectable": True,
     }
 
-    # 7. Rendu du composant
-    # Le 'key' change selon la date pour forcer le rafraîchissement visuel lors de la navigation
-    calendar_key = f"calendar_{st.session_state.current_date.strftime('%Y%W')}"
-    
-    cal_data = calendar(
+    # Affichage du calendrier
+    state = calendar(
         events=formatted_events,
         options=calendar_options,
-        custom_css="""
-           .fc-event-title { font-weight: 600; font-size: 0.85rem; }
-           .fc-timegrid-slot { height: 2.5em!important; } /* Case plus grande pour le tactile */
-        """,
-        key=calendar_key
+        custom_css=".fc-event { border-radius: 6px; padding: 2px; }",
+        key=f"cal_{st.session_state.current_date.strftime('%Y%W')}"
     )
 
-    # Interaction : si l'utilisateur clique sur un créneau vide
-    if cal_data.get("callback") == "dateClick":
-        st.session_state.selected_slot = cal_data["dateClick"]["date"]
-        st.toast(f"Créneau sélectionné : {st.session_state.selected_slot}")
+    # Bouton flottant (optionnel) ou gestion des clics
+    st.button("➕ Ajouter un événement", on_click=add_event_dialog, use_container_width=True)
 
-# Exécution directe si le fichier est appelé
+    # Logique des interactions [8, 9]
+    if state.get("callback") == "dateClick":
+        add_event_dialog(state["dateClick"]["date"])
+    
+    if state.get("callback") == "eventClick":
+        event_info = state["eventClick"]["event"]
+        event_details_dialog(event_info)
+
 if __name__ == "__main__":
     show_calendar()
