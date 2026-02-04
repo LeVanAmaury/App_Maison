@@ -38,7 +38,7 @@ for slot in slots:
             
             if nom == st.session_state.get('user'):
                 if c_btn.button("🗑️", key=f"del_{slot}_{date_str}"):
-                    db.remove_shower(res['id'])
+                    db.remove_shower(res['shower_id'])
                     st.rerun()
         else:
             if st.button(f"Réserver {slot}", key=f"btn_{slot}_{date_str}", use_container_width=True):
