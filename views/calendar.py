@@ -80,7 +80,7 @@ def show_calendar():
     end_w = start_w + timedelta(days=6)
     raw_events = db.get_calendar(start_w.strftime("%Y-%m-%d"), end_w.strftime("%Y-%m-%d"))
     
-    formatted_events =
+    formatted_events = []
     for ev in raw_events:
         formatted_events.append({
             "id": ev.get("calendar_id"),
