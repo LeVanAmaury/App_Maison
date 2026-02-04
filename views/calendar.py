@@ -70,8 +70,8 @@ def show_calendar():
         "initialDate": st.session_state.current_date.strftime("%Y-%m-%d"),
         "headerToolbar": False, # On utilise nos propres boutons Streamlit pour plus de propreté
         "firstDay": 1, # La semaine commence le lundi
-        "slotMinTime": "07:30:00", # Réduit la hauteur en masquant la nuit (Moins de scroll!)
-        "slotMaxTime": "21:30:00",
+        "slotMinTime": "06:30:00", # Réduit la hauteur en masquant la nuit (Moins de scroll!)
+        "slotMaxTime": "23:30:00",
         "allDaySlot": False,
         "locale": "fr",
         "height": "auto", # Le calendrier s'adapte à l'écran sans créer de double barre de défilement
