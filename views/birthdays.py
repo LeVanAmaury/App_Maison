@@ -32,7 +32,7 @@ else:
             continue
             
         b_id = bday.get('birthday_id')
-        b_name = bday.get('name', 'Utilisateur')
+        b_name = bday.get('name') or 'Utilisateur'
         b_date_str = bday.get('date')
         
         if not b_id or not b_date_str:

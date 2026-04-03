@@ -30,7 +30,7 @@ else:
             continue
             
         u_id = item.get('upgrade_id')
-        u_name = item.get('upgrade_name', 'Amélioration')
+        u_name = item.get('upgrade_name') or 'Amélioration'
         
         if not u_id:
             continue

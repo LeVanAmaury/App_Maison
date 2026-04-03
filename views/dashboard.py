@@ -68,7 +68,7 @@ if notes:
         n_content = note.get('content', '')
         n_date = note.get('created_at', '')
         n_author = note.get('author', 'Anonyme')
-        n_read_by = note.get('read_by', [])
+        n_read_by = note.get('read_by') or []
 
         
         current_user = st.session_state.get('user')
