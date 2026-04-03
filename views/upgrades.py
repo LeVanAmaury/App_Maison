@@ -1,28 +1,37 @@
 import streamlit as st
 from src.database import get_db
+
 db = get_db()
 
-st.title("Améliorations")
+st.title("🆙 Améliorations de la Maison")
+st.write("Idées de projets, travaux ou achats pour améliorer notre foyer.")
 
-# --- SECTION AJOUT DE COURSES ---
-with st.form("upgrades_form", clear_on_submit=True):
-    new_upgrade = st.text_input("Ajouter une amélioration à faire")
-    if st.form_submit_button("Ajouter"):
-        if new_upgrade:
-            db.add_upgrade(new_upgrade)
-            st.rerun()
+# --- AJOUT ---
+with st.container(border=True):
+    with st.form("upgrades_form", clear_on_submit=True):
+        new_upgrade = st.text_input("Nouvelle idée d'amélioration", placeholder="Ex: Refaire la peinture, Acheter un nouveau canapé...")
+        if st.form_submit_button("💡 Ajouter à la liste", use_container_width=True):
+            if new_upgrade:
+                db.add_upgrade(new_upgrade)
+                st.success("Idée ajoutée !")
+                st.rerun()
 
 st.divider()
 
-
-# --- SECTION AFFICHAGE LISTE ---
+# --- LISTE ---
 upgrades = db.get_upgrades()
+st.subheader("🛠️ Liste des projets")
+
 if not upgrades:
-    st.info("La liste est vide.")
+    st.info("Aucun projet en vue. Tout est parfait ! ✨")
 else:
-    for upgrade_id, upgrade_name in upgrades:
-        col1, col2 = st.columns([0.6,0.4])
-        col1.write(f"{upgrade_name}")
-        if col2.button("Supprimer", key=f"item_{upgrade_id}"):
-            db.remove_upgrade(upgrade_id)
-            st.rerun()
+    for item in upgrades:
+        u_id = item['upgrade_id']
+        u_name = item['upgrade_name']
+        
+        with st.container(border=True):
+            c1, c2 = st.columns([0.8, 0.2])
+            c1.write(f"**{u_name}**")
+            if c2.button("🗑️", key=f"upg_{u_id}", use_container_width=True):
+                db.remove_upgrade(u_id)
+                st.rerun()

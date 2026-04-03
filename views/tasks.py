@@ -1,47 +1,69 @@
 import streamlit as st
 from src.database import get_db
 from src.notification import send_private_notification
+
 db = get_db()
+MEMBRES = ["Amaury", "Thais", "Corentin", "Maman", "Papoune"]
 
-st.title("Liste des tâches")
+st.title("📝 Gestion des tâches")
 
-# --- SECTION AJOUT DE TÂCHE ---
-with st.form("add_task_form", clear_on_submit=True):
-    task_text = st.text_input("Quelle est la tâche ?")
-    members = st.multiselect("Pour qui ?", ["Amaury", "Thais" , "Corentin", "Maman", "Papoune"], placeholder="Pour qui ?")
-    submit = st.form_submit_button("Ajouter la tache")
+# --- AJOUT DE TÂCHE ---
+with st.expander("➕ Ajouter une nouvelle mission", expanded=True):
+    with st.form("add_task_form", clear_on_submit=True):
+        task_text = st.text_input("Quelle est la tâche ?", placeholder="Faire la vaisselle, sortir les poubelles...")
+        assignees = st.multiselect("Pour qui ?", MEMBRES)
+        
+        if st.form_submit_button("Lancer la mission", use_container_width=True):
+            if task_text and assignees:
+                db.add_task(task_text, assignees, st.session_state["user"])
+                # Notification
+                notification_msg = f"🔔 Nouvelle mission de {st.session_state['user']} : {task_text}"
+                try:
+                    send_private_notification(notification_msg, assignees)
+                    st.success(f"Tâche ajoutée et notification envoyée !")
+                except Exception as e:
+                    st.warning("Tâche ajoutée, mais erreur d'envoi de notification.")
+                st.rerun()
+            else:
+                st.error("Précisez la tâche et au moins un responsable.")
 
-    if submit and task_text:
-        db.add_task(task_text, members, st.session_state["user"])
-        notification_msg = f"Nouvelle mission de {st.session_state["user"]} : {task_text}"
-        send_private_notification(notification_msg, members)
-        st.success(f"Tâche ajoutée et norification envoyée à {members} !")
-        st.rerun()
+st.divider()
 
-
-st.subheader("Liste des tâches en cours")
+# --- FILTRES ---
 tasks = db.get_tasks()
+col_title, col_filter = st.columns([0.6, 0.4])
+col_title.subheader("📋 Missions en cours")
+show_only_todo = col_filter.toggle("⏳ À faire uniquement", value=True)
 
 if not tasks:
-    st.info("Aucune tâche pour le moment.")
+    st.info("Aucune tâche pour le moment. Reposez-vous ! 🌴")
 else:
-    col_f, col_empty = st.columns([0.4,0.6])
-    with col_f:
-        show_only_todo = st.toggle("N'afficher que les tâches à faire", value=False)
-    if show_only_todo:
-        tasks = [t for t in tasks if t[3] == False]
-    for t_id, t_title, t_members, t_done, t_created_by in tasks:
-        col1, col2, col3 = st.columns([0.7, 0.1, 0.2])
+    # Filtrage
+    display_tasks = [t for t in tasks if not t['done']] if show_only_todo else tasks
+    # Tri (dernières créées en haut)
+    display_tasks = sorted(display_tasks, key=lambda x: x['task_id'], reverse=True)
+
+    for task in display_tasks:
+        t_id = task['task_id']
+        t_done = task['done']
         
-        label = f"~~{t_title}~~" if t_done else t_title
-        col1.write(f"Tâche de **{t_created_by}** pour **{','.join(map(str,t_members))}** : {label}")
-        
-        status_done_button = "Fait" if t_done else "A faire"
-        if col2.button(status_done_button, key=f"toggle_{t_id}"):
-            db.toggle_task_status(t_id, t_done)
-            st.rerun()
-        
-        if col3.button("Supprimer", key=f"task_{t_id}"):
-            db.remove_task(t_id)
-            st.success("Tâche supprimée avec succès")
-            st.rerun()
+        with st.container(border=True):
+            c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
+            
+            # Affichage texte
+            status_icon = "✅" if t_done else "⏳"
+            task_label = f"~~{task['title']}~~" if t_done else f"**{task['title']}**"
+            c1.markdown(f"{status_icon} {task_label}")
+            
+            assignees = task['assignee'] if isinstance(task['assignee'], list) else [task['assignee']]
+            c1.caption(f"👤 Par **{task.get('created_by', '?')}** pour **{', '.join(assignees)}**")
+            
+            # Boutons
+            btn_label = "Refaire" if t_done else "Terminer"
+            if c2.button(btn_label, key=f"toggle_{t_id}", use_container_width=True):
+                db.toggle_task_status(t_id, t_done)
+                st.rerun()
+                
+            if c3.button("🗑️", key=f"del_{t_id}", use_container_width=True):
+                db.remove_task(t_id)
+                st.rerun()
