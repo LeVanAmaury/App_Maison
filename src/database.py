@@ -30,7 +30,7 @@ class FamilyDB:
 
     def get_shopping_list(self):
         res = self.supabase.table("shopping_list").select("*").execute()
-        return res.data
+        return res.data or []
 
     # --- TASKS ---
     def add_task(self, title, assignee, creator):
@@ -44,7 +44,7 @@ class FamilyDB:
 
     def get_tasks(self):
         res = self.supabase.table("tasks").select("*").execute()
-        return res.data
+        return res.data or []
 
     def toggle_task_status(self, task_id, current_status):
         return self.supabase.table("tasks").update({"done": not current_status}).eq("task_id", task_id).execute()
@@ -55,7 +55,7 @@ class FamilyDB:
 
     def get_notes(self):
         res = self.supabase.table("notes").select("*").order("created_at", desc=True).execute()
-        return res.data
+        return res.data or []
 
     def mark_note_as_read(self, note_id, user_name):
         res = self.supabase.table("notes").select("read_by").eq("note_id", note_id).execute()
@@ -75,7 +75,7 @@ class FamilyDB:
 
     def get_birthdays(self):
         res = self.supabase.table("birthdays").select("*").order("date").execute()
-        return res.data
+        return res.data or []
 
     def remove_birthday(self, birthday_id):
         return self.supabase.table("birthdays").delete().eq("birthday_id", birthday_id).execute()
@@ -88,7 +88,7 @@ class FamilyDB:
 
     def get_menu(self):
         res = self.supabase.table("weekly_menu").select("*").execute()
-        return res.data
+        return res.data or []
 
     def clear_menu_item(self, item_id):
         return self.supabase.table("weekly_menu").delete().eq("item_id", item_id).execute()
@@ -102,12 +102,12 @@ class FamilyDB:
 
     def get_upgrades(self):
         res = self.supabase.table("upgrades").select("*").execute()
-        return res.data
-    
+        return res.data or []
+
     # --- SHOWERS ---
     def get_showers(self, target_date):
         res = self.supabase.table('douches').select('*').eq('date', target_date).execute()
-        return res.data
+        return res.data or []
     
     def add_shower_slot(self, slot_time, user_name, target_date):
         return self.supabase.table('douches').insert({
@@ -122,7 +122,7 @@ class FamilyDB:
     # --- CALENDAR ---
     def get_calendar(self, start_date, end_date):
         res = self.supabase.table('family_calendar').select('*').gte('event_date', start_date).lte('event_date', end_date).order('start_time').execute()
-        return res.data
+        return res.data or []
     
     def add_calendar(self, name, date, start, end, member):
         return self.supabase.table("family_calendar").insert({
@@ -134,5 +134,6 @@ class FamilyDB:
         return self.supabase.table('family_calendar').delete().eq('calendar_id', event_id).execute()
 
 @st.cache_resource
-def get_db():
-    return FamilyDB()
+def get_family_db():
+    """Forces cache refresh by renaming the function."""
+    return FamilyDB()

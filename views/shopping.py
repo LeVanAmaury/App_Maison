@@ -1,9 +1,9 @@
 import streamlit as st
-from src.database import get_db
+from src.database import get_family_db
 
 st.title("🛒 Listes de courses")
 
-db = get_db()
+db = get_family_db()
 data = db.get_shopping_list()
 
 # Récupération des catégories existantes

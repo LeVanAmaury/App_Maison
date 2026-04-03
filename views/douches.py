@@ -1,9 +1,9 @@
 import streamlit as st
 from datetime import datetime, date, timedelta
-from src.database import get_db
+from src.database import get_family_db
 
 st.title("🚿 Planning de Douches")
-db = get_db()
+db = get_family_db()
 
 choix = st.radio("Pour quel jour ?", ["Aujourd'hui", "Demain"], horizontal=True)
 

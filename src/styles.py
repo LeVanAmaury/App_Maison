@@ -95,10 +95,10 @@ def inject_custom_css():
 
             /* Dashboard Headers */
             h1, h2, h3 {
-                background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
+                color: #ffffff;
                 font-weight: 700;
+                margin-top: 1rem;
+                margin-bottom: 1rem;
             }
             
             .stDivider {
@@ -106,3 +106,4 @@ def inject_custom_css():
             }
         </style>
     """, unsafe_allow_html=True)
+

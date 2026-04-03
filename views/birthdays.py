@@ -1,8 +1,8 @@
 import streamlit as st
 from datetime import datetime
-from src.database import get_db
+from src.database import get_family_db
 
-db = get_db()
+db = get_family_db()
 st.title("🎂 Anniversaires")
 
 # --- AJOUT ---
@@ -27,9 +27,17 @@ if not birthdays:
 else:
     # On trie un peu pour mettre les prochains plus proches en premier (optionnel)
     for bday in birthdays:
-        b_id = bday['birthday_id']
-        b_name = bday['name']
-        b_date_str = bday['date']
+        # Defensive check for dictionary (prevents TypeError seen in logs)
+        if not isinstance(bday, dict):
+            continue
+            
+        b_id = bday.get('birthday_id')
+        b_name = bday.get('name', 'Utilisateur')
+        b_date_str = bday.get('date')
+        
+        if not b_id or not b_date_str:
+            continue
+
         
         b_date_obj = datetime.strptime(b_date_str, "%Y-%m-%d")
         

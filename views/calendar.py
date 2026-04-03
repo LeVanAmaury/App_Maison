@@ -1,12 +1,12 @@
 import streamlit as st
 from streamlit_calendar import calendar
 from datetime import datetime, timedelta
-from src.database import get_db
+from src.database import get_family_db
 
 # 1. Fonction pour ajouter un événement (Fenêtre modale) 
 @st.dialog("Ajouter un événement")
 def add_event_dialog(selected_date=None):
-    db = get_db()
+    db = get_family_db()
     
     # Pré-remplissage si une date a été cliquée
     default_date = datetime.fromisoformat(selected_date) if selected_date else datetime.now()
@@ -33,7 +33,7 @@ def add_event_dialog(selected_date=None):
 # 2. Fonction pour supprimer un événement (Confirmation) [2]
 @st.dialog("Détails de l'événement")
 def event_details_dialog(event_info):
-    db = get_db()
+    db = get_family_db()
     event_id = event_info['id']
     title = event_info['title']
     
@@ -50,7 +50,7 @@ def event_details_dialog(event_info):
             st.rerun()
 
 def show_calendar():
-    db = get_db()
+    db = get_family_db()
 
     # Style CSS optimisé [3, 4]
     st.markdown("""

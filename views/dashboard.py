@@ -1,9 +1,9 @@
 import streamlit as st
-from src.database import get_db
+from src.database import get_family_db
 from datetime import datetime
 from src.weather import get_weather
 
-db = get_db()
+db = get_family_db()
 
 # --- CUSTOM CSS ---
 st.markdown("""
@@ -61,11 +61,15 @@ notes = db.get_notes()
 if notes:
     cols = st.columns(3)
     for i, note in enumerate(notes):
-        n_id = note['note_id']
-        n_content = note['content']
-        n_date = note['created_at']
+        if not isinstance(note, dict):
+            continue
+            
+        n_id = note.get('note_id')
+        n_content = note.get('content', '')
+        n_date = note.get('created_at', '')
         n_author = note.get('author', 'Anonyme')
         n_read_by = note.get('read_by', [])
+
         
         current_user = st.session_state.get('user')
         if current_user and current_user not in n_read_by and current_user != n_author:
@@ -107,14 +111,18 @@ with c2:
     tasks_data = db.get_tasks()
     
     if tasks_data:
-        # Filtrer les tâches non faites
-        pending_tasks = [t for t in tasks_data if not t['done']]
-        latest_tasks = sorted(pending_tasks, key=lambda x: x['task_id'], reverse=True)[:5]
+        # Filter pending tasks and ensure they are dicts
+        pending_tasks = [t for t in tasks_data if isinstance(t, dict) and not t.get('done')]
+        latest_tasks = sorted(pending_tasks, key=lambda x: x.get('task_id', 0), reverse=True)[:5]
         
         if latest_tasks:
             for task in latest_tasks:
-                assignees = task['assignee'] if isinstance(task['assignee'], list) else [task['assignee']]
-                st.write(f"⏳ **{task['title'].strip()}** → {', '.join(assignees)}")
+                title = task.get('title', '').strip()
+                assignees = task.get('assignee', [])
+                if not isinstance(assignees, list):
+                    assignees = [assignees]
+                st.write(f"⏳ **{title}** → {', '.join(map(str, assignees))}")
+
             if st.button("Voir toutes les tâches"):
                 st.switch_page("views/tasks.py")
         else:

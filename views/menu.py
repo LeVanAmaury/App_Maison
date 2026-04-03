@@ -1,9 +1,9 @@
 import streamlit as st
-from src.database import get_db
+from src.database import get_family_db
 
 st.title("🍴 Menu de la Semaine")
 
-db = get_db()
+db = get_family_db()
 jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
 # --- AJOUT ---

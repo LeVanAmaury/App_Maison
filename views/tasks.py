@@ -1,8 +1,8 @@
 import streamlit as st
-from src.database import get_db
+from src.database import get_family_db
 from src.notification import send_private_notification
 
-db = get_db()
+db = get_family_db()
 MEMBRES = ["Amaury", "Thais", "Corentin", "Maman", "Papoune"]
 
 st.title("📝 Gestion des tâches")

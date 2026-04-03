@@ -1,7 +1,7 @@
 import streamlit as st
-from src.database import get_db
+from src.database import get_family_db
 
-db = get_db()
+db = get_family_db()
 
 st.title("🆙 Améliorations de la Maison")
 st.write("Idées de projets, travaux ou achats pour améliorer notre foyer.")
@@ -26,8 +26,15 @@ if not upgrades:
     st.info("Aucun projet en vue. Tout est parfait ! ✨")
 else:
     for item in upgrades:
-        u_id = item['upgrade_id']
-        u_name = item['upgrade_name']
+        if not isinstance(item, dict):
+            continue
+            
+        u_id = item.get('upgrade_id')
+        u_name = item.get('upgrade_name', 'Amélioration')
+        
+        if not u_id:
+            continue
+
         
         with st.container(border=True):
             c1, c2 = st.columns([0.8, 0.2])
